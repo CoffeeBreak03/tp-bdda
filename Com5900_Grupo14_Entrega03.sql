@@ -1,13 +1,13 @@
 ------------------------------------------------------------------
 --GRUPO: 14
---BASUALDO, NICOLÁS NAHUEL 44238788
+--BASUALDO, NICOLÃS NAHUEL 44238788
 --MARCONI, LUCAS MARTIN 45324860
 --PARODI, FRANCISCO MAXILIANO 44669305
---RODRIGUEZ, MARCOS LEÓN 45040212
+--RODRIGUEZ, MARCOS LEÃ“N 45040212
 ----------------------------------------------------------------
 
 -------------------------------------------------------
------------------- CREACIÓN DE BBDD -------------------
+------------------ CREACIÃ“N DE BBDD -------------------
 -------------------------------------------------------
 -- ENUNCIADO: Cree la base de datos --
 
@@ -18,9 +18,9 @@ USE Com5600G14
 GO
 
 -------------------------------------------------------
----------------- CREACIÓN DE ESQUEMAS -----------------
+---------------- CREACIÃ“N DE ESQUEMAS -----------------
 -------------------------------------------------------
--- ENUNCIADO: Genere esquemas para organizar de forma lógica los componentes del sistema y aplique esto en la creación de objetos. NO use el esquema "dbo" --
+-- ENUNCIADO: Genere esquemas para organizar de forma lÃ³gica los componentes del sistema y aplique esto en la creaciÃ³n de objetos. NO use el esquema "dbo" --
 
 CREATE SCHEMA ddbba;
 GO
@@ -32,7 +32,7 @@ CREATE SCHEMA Person;
 GO
 
 -------------------------------------------------------
------------------ CREACIÓN DE TABLAS ------------------
+----------------- CREACIÃ“N DE TABLAS ------------------
 -------------------------------------------------------
 -- ENUNCIADO: Cree entidades y relaciones. Incluya restricciones y claves. 
 
@@ -226,7 +226,7 @@ GO
 -------------------------------------------------------
 ------------- CREACION DE STORE PROCEDURE -------------
 -------------------------------------------------------
--- ENUNCIADO: Genere store procedures para manejar la inserción, modificado, borrado de cada tabla. --
+-- ENUNCIADO: Genere store procedures para manejar la inserciÃ³n, modificado, borrado de cada tabla. --
 
 
 --- PARA TABLA REGISTRO ---
@@ -267,13 +267,15 @@ BEGIN
 	ELSE
 	BEGIN
 		EXEC ddbba.InsertReg @Mod='I', @Txt = 'ERROR EN INSERTAR REGISTRO EN TABLA SUCURSAL';
-		RAISERROR('DIRECCIÓN DE SUCCURSAL DUPLICADA %s', 16, 1, @Direccion);
+		RAISERROR('DIRECCIÃ“N DE SUCCURSAL DUPLICADA %s', 16, 1, @Direccion);
 	END
 	
 END
 GO
 
+
 CREATE OR ALTER PROCEDURE Production.DeleteSucursal	-- BORRADO LOGICO
+
 	@IdSuc INT
 AS
 BEGIN
@@ -288,8 +290,9 @@ BEGIN
 	ELSE
 	BEGIN
 		EXEC ddbba.InsertReg @Mod='D', @Txt = 'ERROR EN ID PARA ELIMINAR REGISTRO EN TABLA SUCURSAL';
-		RAISERROR('ID DE SUCURSAL INVÁLIDA %d', 16, 1, @IdSuc);
+		RAISERROR('ID DE SUCURSAL INVÃLIDA %d', 16, 1, @IdSuc);
 	END
+
 END
 GO
 
@@ -312,7 +315,7 @@ BEGIN
 	ELSE
 	BEGIN
 		EXEC ddbba.InsertReg @Mod='U', @Txt = 'ERROR DE ID PARA ACTUALIZAR REGISTRO EN TABLA SUCURSAL';
-		RAISERROR('ID DE SUCURSAL INVÁLIDA %d', 16, 1, @IdSuc);
+		RAISERROR('ID DE SUCURSAL INVÃLIDA %d', 16, 1, @IdSuc);
 	END
 END
 GO
@@ -335,7 +338,7 @@ BEGIN
 	ELSE
 	BEGIN
 		EXEC ddbba.InsertReg @Mod='I', @Txt = N'ERROR EN INSERTAR REGISTRO EN TABLA LINEA PRODUCTO / CATEGORIA DUPLICADA';
-		RAISERROR('CATEGORÍA DUPLICADA %s', 16, 1, @Descripcion);
+		RAISERROR('CATEGORÃA DUPLICADA %s', 16, 1, @Descripcion);
 	END
 END
 GO
@@ -355,7 +358,7 @@ BEGIN
 	ELSE
 	BEGIN
 		EXEC ddbba.InsertReg @Mod='D', @Txt = N'ERROR EN ID PARA ELIMINAR REGISTRO EN TABLA LINEA PRODUCTO';
-		RAISERROR('ID DE LÍNEA DE PRODUCTO INVÁLIDO %d', 16, 1, @IdLin);
+		RAISERROR('ID DE LÃNEA DE PRODUCTO INVÃLIDO %d', 16, 1, @IdLin);
 	END
 END
 GO
@@ -377,14 +380,14 @@ BEGIN
 		END
 		ELSE
 		BEGIN
-			EXEC ddbba.InsertReg @Mod='U', @Txt = N'ERROR EN DESCRIPCIÓN PARA ACTUALIZAR REGISTRO EN TABLA LINEA PRODUCTO';
-			RAISERROR('CATEGORÍA EXISTENTE %s', 16, 1, @DescN);
+			EXEC ddbba.InsertReg @Mod='U', @Txt = N'ERROR EN DESCRIPCIÃ“N PARA ACTUALIZAR REGISTRO EN TABLA LINEA PRODUCTO';
+			RAISERROR('CATEGORÃA EXISTENTE %s', 16, 1, @DescN);
 		END
 	END
 	ELSE
 	BEGIN
 		EXEC ddbba.InsertReg @Mod='U', @Txt = N'ERROR EN ID PARA ACTUALIZAR REGISTRO EN TABLA LINEA PRODUCTO';
-		RAISERROR('ID DE LÍNEA DE PRODUCTO INVÁLIDO %d', 16, 1, @IdLin);
+		RAISERROR('ID DE LÃNEA DE PRODUCTO INVÃLIDO %d', 16, 1, @IdLin);
 	END
 END
 GO
@@ -420,10 +423,8 @@ BEGIN
 	ELSE
 	BEGIN
 		EXEC ddbba.InsertReg @Mod='I', @Txt = 'ERROR EN INSERTAR REGISTRO EN TABLA PRODUCTO';
-		RAISERROR('LINEA DE PRODUCTO ERRÓNEA %d', 16, 1, @IdLinProd);
+		RAISERROR('LINEA DE PRODUCTO ERRÃ“NEA %d', 16, 1, @IdLinProd);
 	END
-
-	
 END
 GO
 
@@ -577,12 +578,12 @@ BEGIN
 		SET Baja = GETDATE()
 		WHERE IdTipoCli = @IdTCli;
 
-		EXEC ddbba.InsertReg @Mod='D', @Txt = N'BORRADO LÓGICO DE REGISTRO EN TABLA TIPO CLIENTE';
+		EXEC ddbba.InsertReg @Mod='D', @Txt = N'BORRADO LÃ“GICO DE REGISTRO EN TABLA TIPO CLIENTE';
 	END
 	ELSE
 	BEGIN
 		EXEC ddbba.InsertReg @Mod='D', @Txt = 'ERROR EN ID PARA ELIMINAR REGISTRO EN TABLA TIPO CLIENTE';
-		RAISERROR('ID TIPO CLIENTE INVÁLIDO %d', 16, 1, @IdTCli);
+		RAISERROR('ID TIPO CLIENTE INVÃLIDO %d', 16, 1, @IdTCli);
 	END
 END
 GO
@@ -610,7 +611,7 @@ BEGIN
 	ELSE
 	BEGIN
 		EXEC ddbba.InsertReg @Mod='I', @Txt = 'ERROR PARA INSERTAR REGISTRO EN TABLA CLIENTE';
-		RAISERROR('TIPO DE CLIENTE INVÁLIDO %s', 16, 1, @TipoCli);
+		RAISERROR('TIPO DE CLIENTE INVÃLIDO %s', 16, 1, @TipoCli);
 	END
 END
 GO
@@ -630,7 +631,7 @@ BEGIN
 	ELSE
 	BEGIN
 		EXEC ddbba.InsertReg @Mod='D', @Txt = 'ERROR PARA INSERTAR REGISTRO EN TABLA CLIENTE';
-		RAISERROR('ID CLIENTE INVÁLIDO %d', 16, 1, @IdCliente);
+		RAISERROR('ID CLIENTE INVÃLIDO %d', 16, 1, @IdCliente);
 	END
 END
 GO
@@ -707,7 +708,7 @@ BEGIN
 END
 GO
 
-CREATE OR ALTER PROCEDURE Sales.DeleteFactura	--BORRADO LÓGICO
+CREATE OR ALTER PROCEDURE Sales.DeleteFactura	--BORRADO LÃ“GICO
 	@NroFactura INT
 AS
 BEGIN
@@ -744,13 +745,13 @@ BEGIN
 	END
 	ELSE
 	BEGIN
-		EXEC ddbba.InsertReg @Mod = 'I', @Txt = N'ERROR EN INSERTAR REGISTRO EN TABLA MEDIO DE PAGO / DESCRIPCIÓN DUPLICADA';
+		EXEC ddbba.InsertReg @Mod = 'I', @Txt = N'ERROR EN INSERTAR REGISTRO EN TABLA MEDIO DE PAGO / DESCRIPCIÃ“N DUPLICADA';
 		RAISERROR('MEDIO DE PAGO REPETIDO %s', 16, 1, @Desc);
 	END
 END
 GO
 
-CREATE OR ALTER PROCEDURE Sales.DeleteMedPag	--BORRADO LÓGICO
+CREATE OR ALTER PROCEDURE Sales.DeleteMedPag	--BORRADO LÃ“GICO
 	@IdMedPag INT
 AS
 BEGIN
@@ -760,12 +761,12 @@ BEGIN
 		SET Baja = GETDATE()
 		WHERE IdMedPago = @IdMedPag;
 
-		EXEC ddbba.InsertReg @Mod='D', @Txt = N'BORRADO LÓGICO REGISTRO EN TABLA MEDIO DE PAGO';
+		EXEC ddbba.InsertReg @Mod='D', @Txt = N'BORRADO LÃ“GICO REGISTRO EN TABLA MEDIO DE PAGO';
 	END
 	ELSE
 	BEGIN
 		EXEC ddbba.InsertReg @Mod='D', @Txt = 'ERROR EN ID PARA ELIMINAR REGISTRO EN TABLA MEDIO DE PAGO';
-		RAISERROR('ID MEDIO DE PAGO INVÁLIDO %d', 16, 1, @IdMedPag);
+		RAISERROR('ID MEDIO DE PAGO INVÃLIDO %d', 16, 1, @IdMedPag);
 	END
 END
 GO
@@ -796,8 +797,9 @@ BEGIN
 	ELSE
 	BEGIN
 		EXEC ddbba.InsertReg @Mod='I', @Txt = 'ERROR PARA INSERTAR REGISTRO EN TABLA PAGO';
-		RAISERROR('ID DE PAGO INVÁLIDO %d', 16, 1, @MedPago);
+		RAISERROR('ID DE PAGO INVÃLIDO %d', 16, 1, @MedPago);
 	END
+		EXEC ddbba.InsertReg @Mod='I', @Txt = 'ERROR PARA INSERTAR REGISTRO EN TABLA PAGO / ID DE MEDIO DE PAGO INVALIDO'
 END
 GO
 
@@ -815,9 +817,10 @@ BEGIN
 		EXEC ddbba.InsertReg @Mod='U', @Txt = 'ACTUALIZAR ESTADO DE REGISTRO EN TABLA PAGO';
 	END
 	ELSE
+
 	BEGIN
-		EXEC ddbba.InsertReg @Mod='U', @Txt = N'ERROR EN ACTUALIZAR REGISTRO EN TABLA PAGO / ID INVÁLIDO';
-		RAISERROR('ID PAGO INVÁLIDO %d', 16, 1, @IdPago);
+		EXEC ddbba.InsertReg @Mod='U', @Txt = N'ERROR EN ACTUALIZAR REGISTRO EN TABLA PAGO / ID INVÃLIDO';
+		RAISERROR('ID PAGO INVÃLIDO %d', 16, 1, @IdPago);
 	END
 END
 GO
@@ -845,6 +848,7 @@ BEGIN
 		EXEC ddbba.InsertReg @Mod = 'I', @Txt = 'INSERTAR REGISTRO EN TABLA VENTA'
 	END
 	ELSE
+
 	BEGIN
 		EXEC ddbba.InsertReg @Mod = 'I', @Txt = 'ERROR EN INSERTAR REGISTRO EN TABLA VENTA';
 		RAISERROR('NRO VENTA EXISTENTE %d', 16, 1, @NroVenta);
@@ -871,7 +875,7 @@ BEGIN
 				WHEN @EstadoVenta = 'ANULADA' THEN 'ANULADO'
 			END;
 
-		--ACTUALIZACIÓN EN TABLA PAGO--
+		--ACTUALIZACIÃ“N EN TABLA PAGO--
 		DECLARE @IdPag INT = (SELECT IdPag FROM Sales.Venta WHERE NroVenta = @NroVenta);
 
 		EXEC Sales.UpdateEstadoPago @IdPago = @IdPag, @Estado = @EstadoPago;
@@ -887,8 +891,9 @@ BEGIN
 	ELSE
 	BEGIN
 		EXEC ddbba.InsertReg @Mod = 'U', @Txt = 'ERROR EN ACTUALIZAR ESTADO DE REGISTRO EN TABLA VENTA';
-		RAISERROR('NRO VENTA INVÁLIDO %d', 16, 1, @NroVenta);
+		RAISERROR('NRO VENTA INVÃLIDO %d', 16, 1, @NroVenta);
 	END
+		EXEC ddbba.InsertReg @Mod = 'U', @Txt = 'ERROR EN ACTUALIZAR ESTADO DE REGISTRO EN TABLA VENTA'
 END
 GO
 
@@ -911,26 +916,27 @@ BEGIN
 
 		EXEC ddbba.InsertReg @Mod = 'I', @Txt = 'INGRESAR REGISTRO EN TABLA DETALLE VENTA' 
 
-		--ACTUALIZACIÓN EN TABLA PRODUCTO--
+		--ACTUALIZACIÃ“N EN TABLA PRODUCTO--
 		UPDATE Production.Producto
 		SET CantVendida = CantVendida + @CantCompra
 		WHERE IdProd = @IdProd
 
 		DECLARE @CADENA VARCHAR(MAX)
-		SET @CADENA = (SELECT N'ACTUALIZACIÓN DE CANTIDAD DE PRODUCTO ' + CAST(IdProd AS VARCHAR(10)) FROM Production.Producto WHERE IdProd = @IdProd)
+		SET @CADENA = (SELECT N'ACTUALIZACIÃ“N DE CANTIDAD DE PRODUCTO ' + CAST(IdProd AS VARCHAR(10)) FROM Production.Producto WHERE IdProd = @IdProd)
 
 		EXEC ddbba.InsertReg @Mod='U', @Txt = @CADENA
 	END
 	ELSE
 	BEGIN
 		EXEC ddbba.InsertReg @Mod = 'I', @Txt = 'ERROR EN INGRESAR REGISTRO EN TABLA DETALLE VENTA';
-		RAISERROR('NRO VENTA INVÁLIDO %d', 16, 1, @NroVenta);
+		RAISERROR('NRO VENTA INVÃLIDO %d', 16, 1, @NroVenta);
 	END
+
 END
 GO
 
 -------------------------------------------------------
------------------ CREACIÓN DE INDICES -----------------
+----------------- CREACIÃ“N DE INDICES -----------------
 -------------------------------------------------------
 -- AYUDA A LOS UPDATE Y CONSULTAS DE LOS SP
 
