@@ -6,62 +6,9 @@ GO
 -------------------------------------------------------
 
 --- ARCHIVO CATALOGO.CSV ---
-CREATE OR ALTER FUNCTION ddbba.ParseLineaCSV(@linea NVARCHAR(MAX), @separador CHAR(1))
-RETURNS @TablaDiv TABLE (
-	Parte NVARCHAR(MAX),
-	NumParte INT
-	)
-AS
-BEGIN
-		DECLARE @actPos INT = 1,
-				@parte NVARCHAR(MAX) = '',--INICIALIZO LA PARTE EN VACÍO
-				@Comillas BIT = 0,
-				@NumParte INT = 1;
-
-	WHILE @actPos <= LEN(@linea)
-	BEGIN
-		DECLARE @actualLetra CHAR(1) = SUBSTRING(@linea, @actPos, 1);
-
-		-- CAMBIO EL ESTADO DE @Comillas CUANDO ENCUENTRA UNA COMILLA DOBLE
-		IF @actualLetra = '"'
-		BEGIN
-			SET @Comillas = ~@Comillas; -- ALTERNA ENTRO DENTRO Y FUERA DE COMILLAS.
-		END
-		ELSE 
-		BEGIN
-			IF @actualLetra = '_'
-			BEGIN
-				SET @actualLetra = REPLACE(@actualLetra, '_', '  ');
-				SET @parte = @parte + @actualLetra;-- CONCATENO LA LETRA A LA PARTE
-			END
-			ELSE
-			BEGIN
-				IF @actualLetra = @separador AND @Comillas = 0
-				BEGIN
-	-- AL ENCONTRAR EL SEPARADOR FUERA DE COMILLAS EMPIEZA NUEVO CAMPO (PARTE)
-					INSERT INTO @TablaDiv (Parte, NumParte) 
-					VALUES (LTRIM(RTRIM(@parte)), @NumParte);
-					SET @parte = ''; -- REINICIO @parte
-					SET @NumParte = @NumParte + 1; -- INCREMENTO EL NUMERO DE PARTE
-				END
-				ELSE
-				BEGIN
-				-- CONCATENO LA LETRA A LA PARTE
-					SET @parte = @parte + @actualLetra;
-				END
-			END
-		END
-			SET @actPos = @actPos + 1;
-	END
-
-		-- INSERTA EL REGISTRO QUE QUEDA AL FINAL (FECHA INGRESO) YA QUE NO LLEGA AL SEPARADOR PARA INSERTAR EN LA CONDICIÓN
-	IF LEN(@parte) > 0 OR @actualLetra = @separador
-		INSERT INTO @TablaDiv (Parte, NumParte) VALUES (LTRIM(RTRIM(@parte)), @NumParte);
-	RETURN;
-END;
-GO
-
 CREATE OR ALTER PROCEDURE Production.ImportCatalogo
+	@NomArchCat NVARCHAR(255), -- Parámetro para el nombre del archivo
+	@NomArchLineaProd NVARCHAR(255)
 AS
 BEGIN
 	CREATE TABLE #TmpCatalogo
@@ -70,160 +17,121 @@ BEGIN
 		TEXTO NVARCHAR(MAX)
 	);
 
-	BULK INSERT #TmpCatalogo
-	FROM 'E:\UNIVERSIDAD\BBDDAplicada\TP final\TP_integrador_Archivos\Productos\catalogo.csv'
-	WITH(
-		FIELDTERMINATOR = ',',
-		ROWTERMINATOR = '0x0A',
-		CODEPAGE = '65001',
-		FIRSTROW = 2
+	CREATE TABLE #TempCategoria
+	(
+		ID INT IDENTITY(1,1) PRIMARY KEY,
+		Descripcion VARCHAR(36),
+		NomProd VARCHAR(40)
 	);
 
-	WITH TabResultante AS(
-		SELECT MAX(CASE WHEN NumParte = 1 THEN Parte END) AS LinProd
-		FROM #TmpCatalogo
-		CROSS APPLY ddbba.ParseLineaCSV(TEXTO, ',')
-		GROUP BY ID
-	)
-	INSERT INTO Production.LineaProducto(Descripcion)
-	SELECT DISTINCT(LinProd)
-	FROM TabResultante
-	WHERE NOT EXISTS(SELECT 1 FROM Production.LineaProducto WHERE Descripcion = LinProd);
+	CREATE TABLE #TempProductos
+	(
+		Id INT IDENTITY(1,1) PRIMARY KEY,
+		LinProd INT,
+		NomProd VARCHAR(40),
+		Descripcion VARCHAR(90),
+		Precio NUMERIC(7,2),
+		RefPrecio NUMERIC(7,2),
+		RefPeso CHAR(20),
+		FechaIng DATE
+	);
+
+	-- Usar el parámetro @NomArch en el BULK INSERT
+	EXEC('
+		BULK INSERT #TmpCatalogo
+		FROM ''' + @NomArchCat + '''
+		WITH (
+			FIELDTERMINATOR = '','',
+			ROWTERMINATOR = ''0x0A'',
+			CODEPAGE = ''65001'',
+			FIRSTROW = 2
+		)
+	');
+
+	-- Usar el parametro @NomArchLineaProd en OPENROWSET e insertar en la tabla #TempCategoria
+	EXEC('INSERT INTO #TempCategoria (Descripcion, NomProd) ' +
+    'SELECT [LÍNEA DE PRODUCTO], PRODUCTO ' +
+    'FROM OPENROWSET(''Microsoft.ACE.OLEDB.16.0'', ' +
+    '''Excel 12.0;Database=' + @NomArchLineaProd + ';HDR=YES'', ' +
+    '''SELECT * FROM [Clasificacion productos$]'')');
+
 
 	WITH TablaParseada AS(
 		SELECT ID, Parte, NumParte
 		FROM #TmpCatalogo
 		CROSS APPLY ddbba.ParseLineaCSV(TEXTO, ',')
 	),
+	TabTempParCat AS(
+		SELECT ID, Parte, LP.Descripcion
+		FROM #TempCategoria TEMCAT
+		INNER JOIN Production.LineaProducto lp ON TEMCAT.Descripcion = lp.Descripcion COLLATE Latin1_General_CI_AS 
+		CROSS APPLY ddbba.ParseLineaCSV(NomProd, ',')
+
+	),
 	DetProd AS(
 		SELECT 
-			MAX(CASE WHEN tp.NumParte = 1 THEN lp.IdLinProd END) AS LinProd,
+			MAX(lp.IdLinProd) LinProd,
+			MAX(CASE WHEN tp.NumParte = 1 THEN tp.Parte END) AS NomProd,
 			MAX(CASE WHEN tp.NumParte = 2 THEN tp.Parte END) AS Descripcion,
 			MAX(CASE WHEN tp.NumParte = 3 THEN TRY_CAST(tp.Parte AS NUMERIC(7,2)) END) AS Precio,
 			MAX(CASE WHEN tp.NumParte = 4 THEN TRY_CAST(tp.Parte AS NUMERIC(7,2)) END) AS RefPrecio,
 			MAX(CASE WHEN tp.NumParte = 5 THEN tp.Parte END) AS RefPeso,
 			MAX(CASE WHEN tp.NumParte = 6 THEN TRY_CAST(tp.Parte AS DATE) END) AS FechaIng
 		FROM TablaParseada tp
-			LEFT JOIN Production.LineaProducto lp ON tp.Parte = lp.Descripcion
-		GROUP BY ID
+			LEFT JOIN TabTempParCat tc ON tc.Parte = tp.Parte
+			LEFT JOIN Production.LineaProducto lp ON tc.Descripcion = lp.Descripcion
+		GROUP BY tp.ID
 	)
-	INSERT INTO Production.Producto (IdLinProd, CantIngresada, CantVendida, Descripcion, Proveedor, PrecioUnit, RefPrecio, RefPeso, FechaIng)
-	SELECT LinProd, 0, 0, Descripcion, 'No especificado', Precio, RefPrecio, RefPeso, FechaIng
-	FROM DetProd
+	INSERT INTO #TempProductos (LinProd, NomProd, Descripcion, Precio, RefPrecio, RefPeso, FechaIng)
+	SELECT LinProd, NomProd, Descripcion, Precio, RefPrecio, RefPeso, FechaIng
+	FROM DetProd;
 
+	MERGE INTO Production.Producto AS dest
+	USING #TempProductos AS orig
+	ON dest.NomProd COLLATE Latin1_General_CI_AS = orig.NomProd COLLATE Latin1_General_CI_AS
+		AND dest.Descripcion COLLATE Latin1_General_CI_AS = orig.Descripcion COLLATE Latin1_General_CI_AS
+	WHEN NOT MATCHED BY TARGET
+		THEN
+			INSERT (IdLinProd, NomProd, CantIngresada, CantVendida, Descripcion, Proveedor, PrecioUnit, RefPrecio, RefPeso, FechaIng)
+			VALUES (orig.LinProd, UPPER(orig.NomProd), 1, 0, orig.Descripcion, 'No especificado', orig.Precio, orig.RefPrecio, orig.RefPeso, orig.FechaIng)
+	WHEN MATCHED
+		THEN
+			UPDATE SET dest.CantIngresada = dest.CantIngresada + 1;
+	
 	DROP TABLE #TmpCatalogo;
+	DROP TABLE #TempCategoria;
 	
 	EXEC ddbba.InsertReg @Mod='I', @Txt = 'IMPOTAR PRODUCTOS DE CATALOGO.CSV'
 END
 GO
---EXEC Production.ImportCatalogo
---SELECT * FROM Production.Producto
 
 
 --- ARCHIVO Electronic accessories.xsls ---
 CREATE OR ALTER PROCEDURE Production.ImportElectrodomesticos
+	@NomArch VARCHAR(255)
 AS
 BEGIN
-	DECLARE @DescCategoria CHAR(16) = 'Electrodoméstico'
+	DECLARE @DescCategoria CHAR(16) = 'ELECTRODOMÉSTICO';
 
-	EXEC Production.InsertLienaProd @Descripcion = @DescCategoria;	-- SOLO LO INSERTO LA PRIMERA VEZ
+	IF NOT EXISTS(SELECT 1 FROM Production.LineaProducto WHERE Descripcion = @DescCategoria)	-- SOLO LO INSERTO LA PRIMERA VEZ
+		EXEC Production.InsertLineaProd @Descripcion = @DescCategoria;
 
 	DECLARE @IdCat INT = (SELECT IdLinProd FROM Production.LineaProducto WHERE Descripcion = @DescCategoria);
 
-	INSERT INTO Production.Producto (IdLinProd, CantIngresada, CantVendida, Descripcion, Proveedor, PrecioUnit, RefPrecio, RefPeso, FechaIng)
-	SELECT @IdCat, 0, 0, "Product", 'No especificado', "Precio Unitario en Dolares", 0, 0, GETDATE()
-	FROM OPENROWSET('Microsoft.ACE.OLEDB.16.0', 'Excel 12.0;Database=E:\UNIVERSIDAD\BBDDAplicada\TP final\TP_integrador_Archivos\Productos\Electronic accessories.xlsx;HDR=YES;', 'SELECT * FROM [Sheet1$]')
+	EXEC('INSERT INTO Production.Producto (IdLinProd, CantIngresada, CantVendida, Descripcion, Proveedor, PrecioUnit, RefPrecio, RefPeso, FechaIng)
+    SELECT @IdCat, 1, 0, ''Product'', ''No especificado'', ''Precio Unitario en Dolares'', 0, 0, GETDATE()
+    FROM OPENROWSET(''Microsoft.ACE.OLEDB.16.0'', 
+                     ''Excel 12.0;Database=' + @NomArch + ';HDR=YES;'', 
+                     ''SELECT * FROM [Sheet1$]'')');
 
-	EXEC ddbba.InsertReg @Mod='I', @Txt = 'IMPOTAR PRODUCTOS DE ELECTRONI ASCCESSORIES.XLSX'
-END
-GO
-
---EXEC Production.ImportElectrodomesticos
---SELECT * FROM Production.Producto WHERE IdLinProd IN (SELECT IdLinProd FROM Production.LineaProducto WHERE Descripcion = 'Electrodoméstico')
-
-
---- ARCHIVO Electronic accessories.xsls ---
-
-CREATE OR ALTER FUNCTION ddbba.ParseExcelReg(@Cadena NVARCHAR(MAX))
-	RETURNS @TablaDiv TABLE (
-		Parte NVARCHAR(MAX),
-		NumParte INT
-	)
-AS
-BEGIN
-	DECLARE @actPos INT = 1,
-            @parte NVARCHAR(MAX) = '',	--INICIALIZO LA PARTE EN VACÍO
-            @NumParte INT = 1;
-	
-	WHILE @actPos <= LEN(@Cadena)
-    BEGIN
-		DECLARE @actualLetra CHAR(1) = SUBSTRING(@Cadena, @actPos, 1);
-		
-		IF @actualLetra = '|'
-		BEGIN
-			INSERT INTO @TablaDiv (Parte, NumParte)
-			VALUES (@parte, @NumParte);
-
-			SET @parte = '';
-			SET @NumParte = @NumParte + 1;
-		END
-		ELSE
-		BEGIN
-			SET @parte = @parte + @actualLetra;
-		END
-
-		SET @actPos = @actPos + 1;
-	END
-
-	IF LEN(@parte) > 0 OR @actualLetra = '|'
-        INSERT INTO @TablaDiv (Parte, NumParte) VALUES (LTRIM(RTRIM(@parte)), @NumParte);
-    RETURN;
-END;
-GO
-
-CREATE OR ALTER FUNCTION ddbba.SepararCantidadReferenciaXLSX (@Cadena VARCHAR(30))
-RETURNS @TablaRes TABLE (Cant INT, Ref VARCHAR(20))
-AS
-BEGIN
-    DECLARE @Cantidad INT = NULL
-    DECLARE @Referencia NVARCHAR(20)
-    DECLARE @PrimeraParte NVARCHAR(50)
-	DECLARE @Unidad VARCHAR(20)
-
-    -- EXTRAIGO LA PRIMERA PARTE ANTES DEL ESPACIO Y LO QUE SIGUE
-    SET @PrimeraParte = LEFT(@Cadena, CHARINDEX(' ', @Cadena + ' ') - 1);
-	SET @Unidad = LTRIM(SUBSTRING(@Cadena, CHARINDEX(' ', @Cadena + ' ') + 1, LEN(@Cadena)))
-    
-    -- SI MI PRIMERA PARTE ES NUMERO Y LA SEGUNDA PARTE NO ES UNA UNIDAD DE PESO, ENTONCES LO GUARDO COMO CANTIDAD Y REFERENCIA
-    IF ISNUMERIC(@PrimeraParte) = 1 AND LEFT(@Unidad, 1) <> 'g' AND LEFT(@Unidad, 2) <> 'kg' AND LEFT(@Unidad, 2) <> 'ml' AND LEFT(@Unidad, 2) <> 'cc' AND LEFT(@Unidad, 1) <> 'l'
-    BEGIN
-        SET @Cantidad = CAST(@PrimeraParte AS INT)
-        
-		IF SUBSTRING(@Unidad, 1, 1) = '-'
-		BEGIN
-			SET @Unidad = LTRIM(RTRIM( STUFF(@Unidad, 1, 1, ' ')))
-		END
-		
-		SET @Referencia = @Unidad
-    END
-    ELSE
-    BEGIN
-        -- SI LA PRIMERA PARTE NO ES NÚMERICA O SÍ PERO CON UNIDAD DE PESO AL LADO, SIGNIFICA QUE LA CADENA ES UNA REFERENCIA SIN CANTIDAD
-        SET @Cantidad = 1
-        SET @Referencia = @Cadena 
-    END
-
-    -- INSERTO LOS RESULTADOS
-    INSERT INTO @TablaRes (Cant, Ref)
-    VALUES (@Cantidad, @Referencia)
-    
-    RETURN
+	EXEC ddbba.InsertReg @Mod='I', @Txt = 'IMPOTAR PRODUCTOS DE ELECTRONI ASCCESSORIES.XLSX';
 END
 GO
 
 
 --- ARCHIVO PRODUCTOS IMPORTADOS.XLSX ---
 CREATE OR ALTER PROCEDURE Production.ImportProductosImportados
+	@NomArch VARCHAR(255)
 AS
 BEGIN
 	CREATE TABLE #TempProdImport
@@ -232,9 +140,11 @@ BEGIN
 		TEXTO NVARCHAR(MAX)
 	);
 
-	INSERT INTO #TempProdImport(TEXTO)
-	SELECT NombreProducto + '|' + Proveedor + '|' + Categoría + '|' + CantidadPorUnidad + '|' + TRY_CAST(PrecioUnidad  AS VARCHAR(10))
-	FROM OPENROWSET('Microsoft.ACE.OLEDB.16.0', 'Excel 12.0;Database=E:\UNIVERSIDAD\BBDDAplicada\TP final\TP_integrador_Archivos\Productos\Productos_importados.xlsx;HDR=YES;IMEX=1', 'SELECT * FROM [Listado de Productos$]');
+	EXEC('INSERT INTO #TempProdImport(TEXTO)
+    SELECT NombreProducto + ''|'' + Proveedor + ''|'' + Categoría + ''|'' + CantidadPorUnidad + ''|'' + TRY_CAST(PrecioUnidad AS VARCHAR(10))
+    FROM OPENROWSET(''Microsoft.ACE.OLEDB.16.0'', 
+                     ''Excel 12.0;Database=' + @NomArch + ';HDR=YES;IMEX=1'', 
+                     ''SELECT * FROM [Listado de Productos$]'')');
 
 	WITH TabParseada AS(
 		SELECT 
@@ -275,43 +185,11 @@ BEGIN
 END
 GO
 
---EXEC Production.ImportCatalogo
---EXEC Production.ImportElectrodomesticos
---EXEC Production.ImportProductosImportados
-
---SELECT * FROM Production.Producto
-
---DROP DATABASE Com5600G14
-
 
 --- ARCHIVO INFORMACION COMPLEMETARIA.XLSX ---
---"E:\UNIVERSIDAD\BBDDAplicada\TP final\TP_integrador_Archivos\Informacion_complementaria.xlsx"
-
-CREATE OR ALTER FUNCTION ddbba.ParseUbicacion(@TEXTO VARCHAR(MAX))
-RETURNS @TABLADIR TABLE (Direccion VARCHAR(50),
-							Localidad VARCHAR(40),
-							Provincia VARCHAR(40))
-AS
-BEGIN
-	INSERT INTO @TABLADIR (Direccion, Localidad, Provincia)
-	SELECT 
-    LTRIM(RTRIM(SUBSTRING(@TEXTO, 1, CHARINDEX(',', @TEXTO) - 1))) AS DIRECCION_RESULTANTE,
-    LTRIM(RTRIM(SUBSTRING(
-        @TEXTO, 
-        CHARINDEX(',', @TEXTO) + 1, 
-        CHARINDEX(',', @TEXTO, CHARINDEX(',', @TEXTO) + 1) - CHARINDEX(',', @TEXTO) - 1
-    ))) AS LOCALIDAD_RESULTANTE,
-    LTRIM(RTRIM(SUBSTRING(
-        @TEXTO, 
-        CHARINDEX(',', @TEXTO, CHARINDEX(',', @TEXTO) + 1) + 1, 
-        LEN(@TEXTO) - CHARINDEX(',', @TEXTO, CHARINDEX(',', @TEXTO) + 1)
-    ))) AS PROVINCIA_RESULTANTE;
-
-	RETURN;
-END
-GO
 
 CREATE OR ALTER PROCEDURE Production.ImportInfoComp
+	@NomArch VARCHAR(255)
 AS
 BEGIN
 	CREATE TABLE #TempInfoCompImport
@@ -320,10 +198,11 @@ BEGIN
 		TEXTO NVARCHAR(MAX)
 	);
 
-	INSERT INTO #TempInfoCompImport(TEXTO)
-	SELECT CIUDAD + '|' + "REEMPLAZAR POR" + '|' + DIRECCION + '|' + HORARIO + '|' + TRY_CAST(TELEFONO AS VARCHAR(10))
-	FROM OPENROWSET('Microsoft.ACE.OLEDB.16.0', 'Excel 12.0;Database=E:\UNIVERSIDAD\BBDDAplicada\TP final\TP_integrador_Archivos\Informacion_complementaria.xlsx', 'SELECT * FROM [sucursal$]');
-
+	EXEC('INSERT INTO #TempInfoCompImport(TEXTO)
+		SELECT CIUDAD + ''|'' + ''REEMPLAZAR POR'' + ''|'' + DIRECCION + ''|'' + HORARIO + ''|'' + TRY_CAST(TELEFONO AS VARCHAR(10))
+		FROM OPENROWSET(''Microsoft.ACE.OLEDB.16.0'', 
+						 ''Excel 12.0;Database=' + @NomArch + ''', 
+						 ''SELECT * FROM [sucursal$]'')');
 
 	WITH TabParse AS(
 		SELECT ID, Parte, NumParte
@@ -355,9 +234,11 @@ BEGIN
 	DELETE FROM #TempInfoCompImport;
 
 
-	INSERT INTO #TempInfoCompImport(TEXTO)
-	SELECT TRY_CAST("LEGAJO/ID" AS CHAR(6)) + '|' + NOMBRE + '|' + APELLIDO + '|' + TRY_CAST(TRY_CAST(DNI AS NUMERIC(8,0)) AS VARCHAR(8)) + '|' + DIRECCION + '|' + "EMAIL PERSONAL" + '|' + "EMAIL EMPRESA" + '|' + CARGO + '|' + SUCURSAL + '|' + TURNO
-	FROM OPENROWSET('Microsoft.ACE.OLEDB.16.0', 'Excel 12.0;Database=E:\UNIVERSIDAD\BBDDAplicada\TP final\TP_integrador_Archivos\Informacion_complementaria.xlsx', 'SELECT * FROM [Empleados$A1:K17];');
+	EXEC('INSERT INTO #TempInfoCompImport(TEXTO)
+		SELECT TRY_CAST([LEGAJO/ID] AS CHAR(6)) + ''|'' + NOMBRE + ''|'' + APELLIDO + ''|'' + TRY_CAST(TRY_CAST(DNI AS NUMERIC(8,0)) AS VARCHAR(8)) + ''|'' + DIRECCION + ''|'' + [EMAIL PERSONAL] + ''|'' + [EMAIL EMPRESA] + ''|'' + CARGO + ''|'' + SUCURSAL + ''|'' + TURNO
+		FROM OPENROWSET(''Microsoft.ACE.OLEDB.16.0'', 
+						 ''Excel 12.0;Database=' + @NomArch + ''', 
+						 ''SELECT * FROM [Empleados$A1:K17]'')');
 
 	WITH TablaParse AS(
 		SELECT ID, Parte, NumParte
@@ -398,23 +279,27 @@ BEGIN
 
 	DROP TABLE #TempInfoCompImport;
 
-	INSERT INTO Sales.Mediopago(MedPagoAReemp, Descripcion)
-	SELECT F2, F3
-	FROM OPENROWSET('Microsoft.ACE.OLEDB.16.0', 'Excel 12.0;Database=E:\UNIVERSIDAD\BBDDAplicada\TP final\TP_integrador_Archivos\Informacion_complementaria.xlsx', 'SELECT * FROM [medios de pago$];');
+	EXEC('INSERT INTO Sales.Mediopago(MedPagoAReemp, Descripcion)
+		SELECT F2, F3
+		FROM OPENROWSET(''Microsoft.ACE.OLEDB.16.0'', 
+						 ''Excel 12.0;Database=' + @NomArch + ''', 
+						 ''SELECT * FROM [medios de pago$]'')');
 
 
-	INSERT INTO Production.LineaProducto (Descripcion, Prod)
-	SELECT "LÍNEA DE PRODUCTO", PRODUCTO
-	FROM OPENROWSET('Microsoft.ACE.OLEDB.16.0', 'Excel 12.0;Database=E:\UNIVERSIDAD\BBDDAplicada\TP final\TP_integrador_Archivos\Informacion_complementaria.xlsx', 'SELECT * FROM [Clasificacion productos$];'); 
+	EXEC('INSERT INTO Production.LineaProducto (Descripcion, Prod)
+		SELECT [LÍNEA DE PRODUCTO], PRODUCTO
+		FROM OPENROWSET(''Microsoft.ACE.OLEDB.16.0'', 
+						 ''Excel 12.0;Database=' + @NomArch + ''', 
+						 ''SELECT * FROM [Clasificacion productos$]'')');
 
 	EXEC ddbba.InsertReg @Mod='I', @Txt = 'IMPOTAR PRODUCTOS DE INFORMACION_COMPLEMENTARIA.XLSX'
 END
 GO
---drop database com5600g14
 
 
 --- ARCHIVO INFORMACION VENTAS_REGISTRADAS.CSV ---
 CREATE OR ALTER PROCEDURE Production.ImportVentas
+	@NomArch VARCHAR(255)
 AS
 BEGIN
 	CREATE TABLE #TmpVentasIntermedio
@@ -422,14 +307,14 @@ BEGIN
 		TEXTO NVARCHAR(MAX)
 	);
 
-	BULK INSERT #TmpVentasIntermedio
-	FROM 'E:\UNIVERSIDAD\BBDDAplicada\TP final\TP_integrador_Archivos\Ventas_registradas.csv' --CAMBIAR PATH POR PROPIO
-	WITH(
-		FIELDTERMINATOR = ';',
-		ROWTERMINATOR = '0x0A',
-		CODEPAGE = '65001',
-		FIRSTROW = 2
-	);
+	EXEC('BULK INSERT #TmpVentasIntermedio
+		FROM ''' + @NomArch + '''
+		WITH(
+			FIELDTERMINATOR = '';'',
+			ROWTERMINATOR = ''0x0A'',
+			CODEPAGE = ''65001'',
+			FIRSTROW = 2
+		);');
 
 	CREATE TABLE #TmpVentas
 	(
@@ -500,13 +385,14 @@ BEGIN
 		INNER JOIN Sales.Mediopago mp ON v.MedPago = mp.MedPagoAReemp
 	WHERE NOT EXISTS(SELECT 1 FROM Sales.Pago WHERE NroPago = v.IdPago)
 
-	INSERT INTO Sales.Venta(Fecha, Hora, IdSuc, IdEmp, IdPag, IdTipoCli, GeneroCli)
-	SELECT v.Fecha, v.Hora, ts.IdSuc, te.IdEmp, tp.IdPago, tc.IdTipoCli, v.Genero
+	INSERT INTO Sales.Venta(Fecha, Hora, IdSuc, IdEmp, IdPag, IdCli)
+	SELECT v.Fecha, v.Hora, ts.IdSuc, te.IdEmp, tp.IdPago, c.IdCli
 	FROM @TabPartesPorVenta v
 		INNER JOIN Production.Sucursal ts ON v.Ciudad = ts.CiudadOrig
 		INNER JOIN Person.Empleado te ON v.Empl = te.Legajo
 		INNER JOIN Sales.Pago tp ON v.IdPago = tp.NroPago
 		INNER JOIN Person.TipoCliente tc ON tc.Descripcion = v.TipoClien
+		INNER JOIN Person.Cliente c ON c.IdTipoCli = tc.IdTipoCli
 	WHERE NOT EXISTS(SELECT 1 FROM Sales.Venta WHERE NroVenta = v.IdPago)
 	
 	INSERT INTO Sales.Factura(NroFact, IdTipoFac, FechaEmision, Total, IdVent)
@@ -529,4 +415,3 @@ BEGIN
 	EXEC ddbba.InsertReg @Mod='I', @Txt = 'IMPORTAR PRODUCTOS DE VENTAS_REGISTRADAS.CSV'
 END
 GO
-
