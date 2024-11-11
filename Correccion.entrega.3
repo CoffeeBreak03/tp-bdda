@@ -35,6 +35,7 @@ GO
 ----------------- CREACI�N DE TABLAS ------------------
 -------------------------------------------------------
 -- ENUNCIADO: Cree entidades y relaciones. Incluya restricciones y claves. 
+DROP TABLE ddbba.Registro
 
 CREATE TABLE ddbba.Registro
 (
@@ -106,7 +107,7 @@ CREATE TABLE Person.Empleado
 	CONSTRAINT FK_IdSuc FOREIGN KEY (IdSuc)
 		REFERENCES Production.Sucursal (IdSuc),
 	CONSTRAINT CK_Legajo CHECK (Legajo BETWEEN 100000 AND 999999),	--VERIFICA QUE HAYA 6 DIGITOS
-	CONSTRAINT CK_Turno CHECK (Turno IN ('TM', 'TT', 'TN', 'JC'))
+	CONSTRAINT CK_Cargo CHECK (Cargo IN ('TM', 'TT', 'TN', 'JC'))
 );
 
 CREATE TABLE Person.TipoCliente
@@ -144,6 +145,7 @@ CREATE TABLE Sales.Venta
 	NroVenta INT UNIQUE,
 	Fecha DATE NOT NULL,
 	Hora TIME NOT NULL,
+	--IdCli INT NOT NULL,
 	IdSuc INT NOT NULL,
 	IdEmp INT NOT NULL,
 	IdPag INT NOT NULL,
@@ -152,6 +154,8 @@ CREATE TABLE Sales.Venta
 	IdTipoCli INT NOT NULL,
 	GeneroCli CHAR(6) NOT NULL,
 
+	--CONSTRAINT FK_Cli FOREIGN KEY (IdCli)
+		--REFERENCES Person.Cliente (IdCli),
 	CONSTRAINT FK_Suc FOREIGN KEY (IdSuc)
 		REFERENCES Production.Sucursal (IdSuc),
 	CONSTRAINT FK_Emp FOREIGN KEY (IdEmp)
@@ -246,7 +250,7 @@ BEGIN
 END
 GO
 
-CREATE OR ALTER PROCEDURE Production.DeleteSucursal	-- BORRADO L?GICO
+CREATE OR ALTER PROCEDURE Production.DeleteSucursal	-- BORRADO L�GICO
 	@IdSuc INT
 AS
 BEGIN
@@ -256,7 +260,7 @@ BEGIN
 		SET Baja = GETDATE()
 		WHERE IdSuc = @IdSuc
 
-		EXEC ddbba.InsertReg @Mod='D', @Txt = N'BORRADO LOGICO EN TABLA SUCURSAL'
+		EXEC ddbba.InsertReg @Mod='D', @Txt = N'BORRADO L�GICO EN TABLA SUCURSAL'
 	END
 	ELSE
 		EXEC ddbba.InsertReg @Mod='D', @Txt = 'ERROR EN ID PARA ELIMINAR REGISTRO EN TABLA SUCURSAL' 
@@ -297,14 +301,14 @@ BEGIN
 		INSERT INTO Production.LineaProducto (Descripcion)
 		VALUES(@Descripcion)
 
-		EXEC ddbba.InsertReg @Mod='I', @Txt = N'INSERTAR REGISTRO EN TABLA LINEA PRODUCTO'
+		EXEC ddbba.InsertReg @Mod='I', @Txt = N'INSERTAR REGISTRO EN TABLA L�NEA PRODUCTO'
 	END
 	ELSE
-		EXEC ddbba.InsertReg @Mod='I', @Txt = N' ERROR EN INSERTAR REGISTRO EN TABLA LINEA PRODUCTO / CATEGORIA DUPLICADA'
+		EXEC ddbba.InsertReg @Mod='I', @Txt = N' ERROR EN INSERTAR REGISTRO EN TABLA L�NEA PRODUCTO / CATEGOR�A DUPLICADA'
 END
 GO
 
-CREATE OR ALTER PROCEDURE Production.DeleteLienaProd	--BORRADO L?GICO
+CREATE OR ALTER PROCEDURE Production.DeleteLienaProd	--BORRADO L�GICO
 	@IdLin INT
 AS
 BEGIN
@@ -314,10 +318,10 @@ BEGIN
 		SET Baja = GETDATE()
 		WHERE IdLinProd = @IdLin
 
-		EXEC ddbba.InsertReg @Mod='D', @Txt = N'BORRADO LOGICO EN TABLA LINEA PRODUCTO'
+		EXEC ddbba.InsertReg @Mod='D', @Txt = N'BORRADO L�GICO EN TABLA L�NEA PRODUCTO'
 	END
 	ELSE
-		EXEC ddbba.InsertReg @Mod='D', @Txt = N'ERROR EN ID PARA ELIMINAR REGISTRO EN TABLA LINEA PRODUCTO' 
+		EXEC ddbba.InsertReg @Mod='D', @Txt = N'ERROR EN ID PARA ELIMINAR REGISTRO EN TABLA L�NEA PRODUCTO' 
 END
 GO
 
@@ -332,10 +336,10 @@ BEGIN
 		SET Descripcion = @DescN
 		WHERE IdLinProd = @IdLin
 
-		EXEC ddbba.InsertReg @Mod='U', @Txt = N'ACTUALIZAR REGISTRO EN TABLA LINEA PRODUCTO'
+		EXEC ddbba.InsertReg @Mod='U', @Txt = N'ACTUALIZAR REGISTRO EN TABLA L�NEA PRODUCTO'
 	END
 	ELSE
-		EXEC ddbba.InsertReg @Mod='U', @Txt = N'ERROR EN ID PARA ACTUALIZAR REGISTRO EN TABLA LINEA PRODUCTO' 
+		EXEC ddbba.InsertReg @Mod='U', @Txt = N'ERROR EN ID PARA ACTUALIZAR REGISTRO EN TABLA L�NEA PRODUCTO' 
 END
 GO
 
@@ -354,7 +358,7 @@ BEGIN
 	IF NOT EXISTS (SELECT 1 FROM Production.Producto WHERE Descripcion = @Descripcion) 
 		AND EXISTS (SELECT 1 FROM Production.LineaProducto WHERE IdLinProd = @IdLinProd)
 	BEGIN
-		INSERT INTO Production.Producto(CantIngresada, Descripcion, IdLinProd, Proveedor, PrecioUnit) 
+		INSERT INTO Production.Producto(CantVendida, Descripcion, IdLinProd, Proveedor, PrecioUnit) 
 		VALUES(@CantIngreso, @Descripcion, @IdLinProd, @Proveedor, @PrecioUnit)
 	
 		EXEC ddbba.InsertReg @Mod='I', @Txt = 'INSERTAR REGISTRO EN TABLA PRODUCTO'
@@ -364,7 +368,7 @@ BEGIN
 END
 GO
 
-CREATE OR ALTER PROCEDURE Production.DeleteProd		--BORRADO L?GICO
+CREATE OR ALTER PROCEDURE Production.DeleteProd		--BORRADO L�GICO
 	@IdProd INT
 AS
 BEGIN
@@ -374,7 +378,7 @@ BEGIN
 		SET Baja = GETDATE()
 		WHERE IdProd = @IdProd
 
-		EXEC ddbba.InsertReg @Mod='D', @Txt = N'BORRADO LOGICO REGISTRO EN TABLA PRODUCTO'
+		EXEC ddbba.InsertReg @Mod='D', @Txt = N'BORRADO L�GICO REGISTRO EN TABLA PRODUCTO'
 	END
 	ELSE
 		EXEC ddbba.InsertReg @Mod='D', @Txt = 'ERROR EN ID PARA ELIMINAR REGISTRO EN TABLA PRODUCTO'
@@ -445,7 +449,7 @@ BEGIN
 END
 GO
 
-CREATE OR ALTER PROCEDURE Person.DeleteEmp	--BORRADO L?GICO
+CREATE OR ALTER PROCEDURE Person.DeleteEmp	--BORRADO L�GICO
 	@Legajo INT
 AS
 BEGIN
@@ -455,7 +459,7 @@ BEGIN
 		SET Baja = GETDATE()
 		WHERE Legajo = @Legajo
 
-		EXEC ddbba.InsertReg @Mod='D', @Txt = N'BORRADO LOGICO EN REGISTRO EN TABLA EMPLEADO'
+		EXEC ddbba.InsertReg @Mod='D', @Txt = N'BORRADO L�GICO EN REGISTRO EN TABLA EMPLEADO'
 	END
 	ELSE
 		EXEC ddbba.InsertReg @Mod='D', @Txt = 'ERROR EN ID PARA ELIMINAR REGISTRO EN TABLA EMPLEADO'
@@ -482,7 +486,7 @@ END
 END
 GO
 
-CREATE OR ALTER PROCEDURE Person.DeleteTipoCli	--BORRADO LOGICO
+CREATE OR ALTER PROCEDURE Person.DeleteTipoCli	--BORRADO L�GICO
 	@IdTCli INT
 AS
 BEGIN
@@ -491,7 +495,7 @@ BEGIN
 		UPDATE Person.Cliente
 		SET Baja = GETDATE()
 		WHERE IdTipoCli = @IdTCli
-		EXEC ddbba.InsertReg @Mod='D', @Txt = N'BORRADO LOGICO DE REGISTRO EN TABLA TIPO CLIENTE'
+		EXEC ddbba.InsertReg @Mod='D', @Txt = N'BORRADO L�GICO DE REGISTRO EN TABLA TIPO CLIENTE'
 	END
 	ELSE
 		EXEC ddbba.InsertReg @Mod='D', @Txt = 'ERROR EN ID PARA ELIMINAR REGISTRO EN TABLA TIPO CLIENTE'
@@ -508,7 +512,7 @@ BEGIN
 	SET @TipFac = UPPER(@TipFac);
 	SET @Desc = UPPER(@Desc);
 	
-	IF NOT EXISTS(SELECT 1 FROM Sales.TipoFactura WHERE TipoFac = @TipFac AND Descripcion = @Desc)	--VERIFICAR SI YA ESTA INSERTADO
+	IF NOT EXISTS(SELECT 1 FROM Sales.TipoFactura WHERE TipoFac = @TipFac AND Descripcion = @Desc)	--VERIFICAR SI YA EST� INSERTADO
 	BEGIN
 		INSERT INTO Sales.TipoFactura (TipoFac, Descripcion)
 		VALUES (@TipFac, @Desc)
@@ -564,7 +568,7 @@ BEGIN
 END
 GO
 
-CREATE OR ALTER PROCEDURE Sales.DeleteFactura	--BORRADO L�GICO
+CREATE OR ALTER PROCEDURE Sales.DeleteFactura	--BORRADO LÓGICO
 	@NroFactura INT
 AS
 BEGIN
@@ -574,12 +578,14 @@ BEGIN
 		SET Baja = GETDATE()
 		WHERE NroFact = @NroFactura
 
-		EXEC ddbba.InsertReg @Mod='D', @Txt = 'BORRADO LOGICO DE REGISTRO EN TABLA FACTURA'
+		EXEC ddbba.InsertReg @Mod='D', @Txt = 'BORRADO LÓGICO DE REGISTRO EN TABLA FACTURA'
 	END
 	ELSE
 		EXEC ddbba.InsertReg @Mod='D', @Txt = 'ERROR EN BORRAR REGISTRO EN TABLA TIPO FACTURA / NRO DE FACTURA ERRONEO'
 END
 GO
+
+
 
 
 ---PARA TABLA MEDIO DE PAGO---
@@ -597,11 +603,12 @@ BEGIN
 		EXEC ddbba.InsertReg @Mod='I', @Txt = 'INSERTAR REGISTRO EN TABLA MEDIO DE PAGO'
 	END
 	ELSE
-		EXEC ddbba.InsertReg @Mod = 'I', @Txt = N'ERROR EN INSERTAR REGISTRO EN TABLA MEDIO DE PAGO / DESCRIPCI�N DUPLICADA'
+		EXEC ddbba.InsertReg @Mod = 'I', @Txt = N'ERROR EN INSERTAR REGISTRO EN TABLA MEDIO DE PAGO / DESCRIPCIÓN DUPLICADA'
 END
 GO
 
-CREATE OR ALTER PROCEDURE Sales.DeleteMedPag	--BORRADO L�GICO
+
+CREATE OR ALTER PROCEDURE Sales.DeleteMedPag	--BORRADO LÓGICO
 	@IdMedPag INT
 AS
 BEGIN
@@ -611,7 +618,7 @@ BEGIN
 		SET Baja = GETDATE()
 		WHERE IdMedPago = @IdMedPag
 
-		EXEC ddbba.InsertReg @Mod='D', @Txt = N'BORRADO L�GICO REGISTRO EN TABLA MEDIO DE PAGO'
+		EXEC ddbba.InsertReg @Mod='D', @Txt = N'BORRADO LÓGICO REGISTRO EN TABLA MEDIO DE PAGO'
 	END
 	ELSE
 		EXEC ddbba.InsertReg @Mod='D', @Txt = 'ERROR EN ID PARA ELIMINAR REGISTRO EN TABLA MEDIO DE PAGO'
@@ -638,7 +645,6 @@ BEGIN
 		EXEC ddbba.InsertReg @Mod='I', @Txt = 'ERROR PARA INSERTAR REGISTRO EN TABLA PAGO / ID DE MEDIO DE PAGO INVALIDO'
 END
 GO
-
 CREATE OR ALTER PROCEDURE Sales.UpdateEstadoPago
 	@IdPago INT,
 	@Estado CHAR(10)
@@ -653,10 +659,9 @@ BEGIN
 		EXEC ddbba.InsertReg @Mod='U', @Txt = 'ACTUALIZAR ESTADO DE REGISTRO EN TABLA PAGO'
 	END
 	ELSE
-		EXEC ddbba.InsertReg @Mod='U', @Txt = N'ERROR EN ACTUALIZAR REGISTRO EN TABLA PAGO / ID INV�LIDO'
+		EXEC ddbba.InsertReg @Mod='U', @Txt = N'ERROR EN ACTUALIZAR REGISTRO EN TABLA PAGO / ID INVÁLIDO'
 END
 GO
-
 
 ---TABLA VENTA---
 CREATE OR ALTER PROCEDURE Sales.InsertVenta
@@ -684,6 +689,7 @@ BEGIN
 END
 GO
 
+
 CREATE OR ALTER PROCEDURE Sales.UpdateEstadoVenta
 	@NroVenta INT,
 	@EstadoVenta CHAR(7)
@@ -703,7 +709,7 @@ BEGIN
 				WHEN @EstadoVenta = 'ANULADA' THEN 'ANULADO'
 			END;
 
-		--ACTUALIZACI�N EN TABLA PAGO--
+		--ACTUALIZACIÓN EN TABLA PAGO--
 		DECLARE @IdPag INT = (SELECT IdPag FROM Sales.Venta WHERE NroVenta = @NroVenta);
 
 		EXEC Sales.UpdateEstadoPago @IdPago = @IdPag, @Estado = @EstadoPago;
@@ -720,6 +726,7 @@ BEGIN
 		EXEC ddbba.InsertReg @Mod = 'U', @Txt = 'ERROR EN ACTUALIZAR ESTADO DE REGISTRO EN TABLA VENTA'
 END
 GO
+
 
 
 --- TABLA DETALLE VENTA ---
@@ -740,13 +747,13 @@ BEGIN
 
 		EXEC ddbba.InsertReg @Mod = 'I', @Txt = 'INGRESAR REGISTRO EN TABLA DETALLE VENTA' 
 
-		--ACTUALIZACI�N EN TABLA PRODUCTO--
+		--ACTUALIZACIÓN EN TABLA PRODUCTO--
 		UPDATE Production.Producto
 		SET CantVendida = CantVendida + @CantCompra
 		WHERE IdProd = @IdProd
 
 		DECLARE @CADENA VARCHAR(MAX)
-		SET @CADENA = (SELECT N'ACTUALIZACI�N DE CANTIDAD DE PRODUCTO ' + CAST(IdProd AS VARCHAR(10)) FROM Production.Producto WHERE IdProd = @IdProd)
+		SET @CADENA = (SELECT N'ACTUALIZACIÓN DE CANTIDAD DE PRODUCTO ' + CAST(IdProd AS VARCHAR(10)) FROM Production.Producto WHERE IdProd = @IdProd)
 
 		EXEC ddbba.InsertReg @Mod='U', @Txt = @CADENA
 	END
@@ -754,6 +761,7 @@ BEGIN
 		EXEC ddbba.InsertReg @Mod = 'I', @Txt = 'ERROR EN INGRESAR REGISTRO EN TABLA DETALLE VENTA' 
 END
 GO
+
 
 -------------------------------------------------------
 ----------------- CREACI�N DE INDICES -----------------
@@ -781,33 +789,5 @@ ON Sales.Venta (NroVenta) INCLUDE (Estado, FechaEstado)
 WITH (FILLFACTOR = 70);	--HAY MAYOR CANTIDAD DE CAMBIOS
 GO
 
-USE Com5600G14;
-
-SELECT 
-    f.NroFact AS "Factura ID",
-    tf.TipoFac AS "Tipo de Factura",
-    s.Localidad AS "Ciudad",
-    tc.Descripcion AS "Tipo de Cliente",
-    v.GeneroCli AS "G�nero",
-    lp.Descripcion AS "L�nea de Producto",
-    p.NomProd AS "Producto",
-    p.PrecioUnit AS "Precio Unitario",
-    dv.Cantidad AS "Cantidad",
-    v.Fecha AS "Fecha",
-    v.Hora AS "Hora",
-    mp.Descripcion AS "Medio de Pago",
-    s.Direccion AS "Sucursal"
-FROM Sales.Factura f
-	JOIN Sales.TipoFactura tf ON f.IdTipoFac = tf.IdTipoFac
-	JOIN Sales.Venta v ON f.IdVent = v.IdVenta
-	JOIN Person.TipoCliente tc ON v.IdTipoCli = tc.IdTipoCli
-	JOIN Production.Sucursal s ON v.IdSuc = s.IdSuc
-	JOIN Sales.Pago pag ON v.IdPag = pag.IdPago
-	JOIN Sales.Mediopago mp ON pag.IdMedPago = mp.IdMedPago
-	JOIN Sales.DetalleVenta dv ON v.IdVenta = dv.IdVenta
-	JOIN Production.Producto p ON dv.IdProd = p.IdProd
-	JOIN Production.LineaProducto lp ON p.IdLinProd = lp.IdLinProd
-WHERE v.Estado = 'ACTIVA' 
-ORDER BY  v.Fecha, v.Hora;
 
 --DROP DATABASE COM5600G14
