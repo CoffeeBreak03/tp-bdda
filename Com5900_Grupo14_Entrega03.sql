@@ -106,7 +106,7 @@ CREATE TABLE Person.Empleado
 	CONSTRAINT FK_IdSuc FOREIGN KEY (IdSuc)
 		REFERENCES Production.Sucursal (IdSuc),
 	CONSTRAINT CK_Legajo CHECK (Legajo BETWEEN 100000 AND 999999),	--VERIFICA QUE HAYA 6 DIGITOS
-	CONSTRAINT CK_Cargo CHECK (Cargo IN ('TM', 'TT', 'TN', 'JC'))
+	CONSTRAINT CK_Turno CHECK (Turno IN ('TM', 'TT', 'TN', 'JC'))
 );
 
 CREATE TABLE Person.TipoCliente
@@ -354,7 +354,7 @@ BEGIN
 	IF NOT EXISTS (SELECT 1 FROM Production.Producto WHERE Descripcion = @Descripcion) 
 		AND EXISTS (SELECT 1 FROM Production.LineaProducto WHERE IdLinProd = @IdLinProd)
 	BEGIN
-		INSERT INTO Production.Producto(CantVendida, Descripcion, IdLinProd, Proveedor, PrecioUnit) 
+		INSERT INTO Production.Producto(CantIngresada, Descripcion, IdLinProd, Proveedor, PrecioUnit) 
 		VALUES(@CantIngreso, @Descripcion, @IdLinProd, @Proveedor, @PrecioUnit)
 	
 		EXEC ddbba.InsertReg @Mod='I', @Txt = 'INSERTAR REGISTRO EN TABLA PRODUCTO'
@@ -781,5 +781,33 @@ ON Sales.Venta (NroVenta) INCLUDE (Estado, FechaEstado)
 WITH (FILLFACTOR = 70);	--HAY MAYOR CANTIDAD DE CAMBIOS
 GO
 
+USE Com5600G14;
+
+SELECT 
+    f.NroFact AS "Factura ID",
+    tf.TipoFac AS "Tipo de Factura",
+    s.Localidad AS "Ciudad",
+    tc.Descripcion AS "Tipo de Cliente",
+    v.GeneroCli AS "Género",
+    lp.Descripcion AS "Línea de Producto",
+    p.NomProd AS "Producto",
+    p.PrecioUnit AS "Precio Unitario",
+    dv.Cantidad AS "Cantidad",
+    v.Fecha AS "Fecha",
+    v.Hora AS "Hora",
+    mp.Descripcion AS "Medio de Pago",
+    s.Direccion AS "Sucursal"
+FROM Sales.Factura f
+	JOIN Sales.TipoFactura tf ON f.IdTipoFac = tf.IdTipoFac
+	JOIN Sales.Venta v ON f.IdVent = v.IdVenta
+	JOIN Person.TipoCliente tc ON v.IdTipoCli = tc.IdTipoCli
+	JOIN Production.Sucursal s ON v.IdSuc = s.IdSuc
+	JOIN Sales.Pago pag ON v.IdPag = pag.IdPago
+	JOIN Sales.Mediopago mp ON pag.IdMedPago = mp.IdMedPago
+	JOIN Sales.DetalleVenta dv ON v.IdVenta = dv.IdVenta
+	JOIN Production.Producto p ON dv.IdProd = p.IdProd
+	JOIN Production.LineaProducto lp ON p.IdLinProd = lp.IdLinProd
+WHERE v.Estado = 'ACTIVA' 
+ORDER BY  v.Fecha, v.Hora;
 
 --DROP DATABASE COM5600G14
