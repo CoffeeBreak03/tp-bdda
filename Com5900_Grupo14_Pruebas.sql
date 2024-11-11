@@ -1,4 +1,5 @@
 ﻿--Casos de pruebas de los procedures
+USE Com5600G14
 
 --Sucursales
 EXEC Production.InsertSucursal 
@@ -53,7 +54,7 @@ SELECT * FROM Production.Producto
 --Empleados
 EXEC Person.InsertEmp  
     @Legajo = 100124, 
-    @IdSuc = 11, 
+    @IdSuc = 10, 
     @DNI = 45324860, 
     @Nombre = 'Edinson', 
     @Apellido = 'Cavani', 
