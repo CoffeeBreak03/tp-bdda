@@ -107,7 +107,7 @@ CREATE TABLE Person.Empleado
 	CONSTRAINT FK_IdSuc FOREIGN KEY (IdSuc)
 		REFERENCES Production.Sucursal (IdSuc),
 	CONSTRAINT CK_Legajo CHECK (Legajo BETWEEN 100000 AND 999999),	--VERIFICA QUE HAYA 6 DIGITOS
-	CONSTRAINT CK_Cargo CHECK (Cargo IN ('TM', 'TT', 'TN', 'JC'))
+	CONSTRAINT CK_Turno CHECK (Turno IN ('TM', 'TT', 'TN', 'JC'))
 );
 
 CREATE TABLE Person.TipoCliente
