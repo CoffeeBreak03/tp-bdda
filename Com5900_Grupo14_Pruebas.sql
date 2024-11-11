@@ -1,129 +1,107 @@
---Casos de Prueba para los Stored Procedures--
+ï»¿--Casos de pruebas de los procedures
+USE Com5600G14
 
--- Casos de Prueba para InsertSucursal
--- Caso de Éxito
-EXEC Production.InsertSucursal
-    @Direccion = 'Av. Corrientes 1234', 
-    @Ciudad = 'CABA', 
-    @Provincia = 'Buenos Aires', 
-    @Horario = '9 a 18', 
-    @Telefono = 12345678;
-
--- Caso de Error: Falta de campo requerido
+--Sucursales
 EXEC Production.InsertSucursal 
-    @Direccion = NULL, 
-    @Ciudad = 'CABA', 
-    @Provincia = 'Buenos Aires', 
-    @Horario = '9 a 18', 
-    @Telefono = 12345678;
+    @Direccion = 'Av. Siempre Viva 123', 
+    @Ciudad = 'Springfield', 
+    @Provincia = 'Capital', 
+    @Horario = '18:00', 
+    @Telefono = 123456789;
 
--- Casos de Prueba para DeleteSucursal
--- Caso de Éxito
 EXEC Production.DeleteSucursal 
-	@IdSuc = 5;
+	@IdSuc = 9999;
 
--- Caso de Error: Sucursal no existente
-EXEC Production.DeleteSucursal 
-	@IdSuc = 999;
+EXEC Production.UpdateUbicacionSucursal 
+    @IdSuc = 12, 
+    @DireccionN = 'Av. Falsa 123', 
+    @LocalidadN = 'Lomas del Mirador', 
+    @ProvinciaN = 'Capital';
 
--- Casos de Prueba para InsertLienaProd
--- Caso de Éxito
-EXEC Production.InsertLienaProd
-	@Descripcion = 'Accesorios';
+SELECT * FROM Production.Sucursal
 
--- Caso de Error: Descripción duplicada
+--Liena de Prod
 EXEC Production.InsertLienaProd 
-	@Descripcion = 'Accesorios';
+	@Descripcion = 'Lacteos';
 
--- Casos de Prueba para DeleteLienaProd
--- Caso de Éxito
-EXEC Production.DeleteLienaProd 
-	@IdLin = 3;
+EXEC Production.DeleteLienaProd
+	@IdLin = 1;
 
--- Caso de Error: Línea de producto no existente
-EXEC Production.DeleteLienaProd 
-	@IdLin = 100;
+SELECT * FROM Production.LineaProducto 
 
--- Casos de Prueba para InsertProd
--- Caso de Éxito
-EXEC Production.InsertProd 
-    @Descripcion = 'Mouse Inalámbrico', 
-    @CantIngreso = 20, 
-    @IdLinProd = 1, 
-    @Proveedor = 'TechSuppliers', 
-    @PrecioUnit = 15.50;
+--Prodructos
+EXEC Production.InsertProd
+	@Descripcion = 'Fanta',
+	@CantIngreso = 44,
+	@IdLinProd = 1,
+	@Proveedor = 'Coca Cola Inc',
+	@PrecioUnit = 20.45;
 
--- Caso de Error: Producto duplicado
-EXEC Production.InsertProd 
-    @Descripcion = 'Mouse Inalámbrico', 
-    @CantIngreso = 20, 
-    @IdLinProd = 1, 
-    @Proveedor = 'TechSuppliers', 
-    @PrecioUnit = 15.50;
-
--- Casos de Prueba para UpdatePriceProd
--- Caso de Éxito
-EXEC Production.UpdatePriceProd @IdProd = 4, @PriceN = 18.75;
+EXEC Production.UpdatePriceProd 
+	@IdProd = 1, 
+	@PriceN = 18.75;	
 
 -- Caso de Error: Producto no existente
-EXEC Production.UpdatePriceProd @IdProd = 999, @PriceN = 18.75;
+EXEC Production.UpdatePriceProd 
+	@IdProd = 9999999, 
+	@PriceN = 18.75;
 
--- Casos de Prueba para InsertEmp
--- Caso de Éxito
-EXEC Person.InsertEmp 
-    @Legajo = 123456, 
-    @IdSuc = 1, 
-    @DNI = 12345678, 
+EXEC Production.DeleteProd
+	@IdProd = 1;
+
+SELECT * FROM Production.Producto
+
+--Empleados
+EXEC Person.InsertEmp  
+    @Legajo = 100124, 
+    @IdSuc = 10, 
+    @DNI = 45324860, 
     @Nombre = 'Edinson', 
     @Apellido = 'Cavani', 
     @EmailPersona = 'Cabj10@gmail.com', 
     @EmailEmpresarial = 'Ecavani@empresa.com', 
-    @Cargo = 'Vendedor', 
-    @Turno = 'A';
+    @Cargo = 'Delantero', 
+    @Turno = 'JC';
 
--- Caso de Error: Legajo duplicado
+
 EXEC Person.InsertEmp 
-    @Legajo = 123456, 
-    @IdSuc = 1, 
-    @DNI = 12345678, 
+    @Legajo = 100124, 
+    @IdSuc = 10, 
+    @DNI = 44568742, 
     @Nombre = 'Frank', 
     @Apellido = 'Fabra', 
     @EmailPersona = 'fabrigol@gmail.com', 
     @EmailEmpresarial = 'FrankF@empresa.com', 
-    @Cargo = 'Vendedor', 
-    @Turno = 'A';
+    @Cargo = 'Extremo', 
+    @Turno = 'TN';
 
--- Casos de Prueba para DeleteEmp
--- Caso de Éxito
 EXEC Person.DeleteEmp 
 	@Legajo = 123456;
 
--- Caso de Error: Empleado no existente
-EXEC Person.DeleteEmp 
+EXEC Person.DeleteEmp
 	@Legajo = 999999;
 
--- Casos de Prueba para InsertFactura
--- Caso de Éxito
-EXEC Sales.InsertFactura 
+SELECT * FROM Person.Empleado
+
+--Factura
+EXEC Sales.InsertFactura	--NO SE POR QUE NO FUNCIONA
     @NroFactura = 1001, 
     @TipoFac = 1, 
     @Fecha = '2024-10-10', 
     @Monto = 350.00, 
     @NroVent = 1;
 
--- Caso de Error: Factura duplicada
 EXEC Sales.InsertFactura 
     @NroFactura = 1001, 
-    @TipoFac = 1, 
+    @TipoFac = 2, 
     @Fecha = '2024-10-10', 
     @Monto = 350.00, 
     @NroVent = 1;
 
--- Casos de Prueba para DeleteFactura
--- Caso de Éxito
-EXEC Sales.DeleteFactura 
+EXEC Sales.DeleteFactura	
 	@NroFactura = 1001;
 
--- Caso de Error: Factura no existente
-EXEC Sales.DeleteFactura 
+EXEC Sales.DeleteFactura	
 	@NroFactura = 9999;
+
+SELECT * FROM Sales.Factura
