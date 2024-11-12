@@ -71,7 +71,7 @@ BEGIN
 	);
 
 	BULK INSERT #TmpCatalogo
-	FROM 'C:\Users\parof\Documents\Documentos Varios\Universidad\Materias\Bases de datos aplicada\TP\TP_integrador_Archivos\Productos\catalogo.csv'
+	FROM 'E:\UNIVERSIDAD\BBDDAplicada\TP final\TP_integrador_Archivos\Productos\catalogo.csv'
 	WITH(
 		FIELDTERMINATOR = ',',
 		ROWTERMINATOR = '0x0A',
@@ -132,7 +132,7 @@ BEGIN
 
 	INSERT INTO Production.Producto (IdLinProd, CantIngresada, CantVendida, Descripcion, Proveedor, PrecioUnit, RefPrecio, RefPeso, FechaIng)
 	SELECT @IdCat, 0, 0, "Product", 'No especificado', "Precio Unitario en Dolares", 0, 0, GETDATE()
-	FROM OPENROWSET('Microsoft.ACE.OLEDB.16.0', 'Excel 12.0;Database=C:\Users\parof\Documents\Documentos Varios\Universidad\Materias\Bases de datos aplicada\TP\TP_integrador_Archivos\Productos\Electronic accessories.xlsx;HDR=YES;', 'SELECT * FROM [Sheet1$]')
+	FROM OPENROWSET('Microsoft.ACE.OLEDB.16.0', 'Excel 12.0;Database=E:\UNIVERSIDAD\BBDDAplicada\TP final\TP_integrador_Archivos\Productos\Electronic accessories.xlsx;HDR=YES;', 'SELECT * FROM [Sheet1$]')
 
 	EXEC ddbba.InsertReg @Mod='I', @Txt = 'IMPOTAR PRODUCTOS DE ELECTRONI ASCCESSORIES.XLSX'
 END
@@ -234,7 +234,7 @@ BEGIN
 
 	INSERT INTO #TempProdImport(TEXTO)
 	SELECT NombreProducto + '|' + Proveedor + '|' + Categoría + '|' + CantidadPorUnidad + '|' + TRY_CAST(PrecioUnidad  AS VARCHAR(10))
-	FROM OPENROWSET('Microsoft.ACE.OLEDB.16.0', 'Excel 12.0;Database=C:\Users\parof\Documents\Documentos Varios\Universidad\Materias\Bases de datos aplicada\TP\TP_integrador_Archivos\Productos\Productos_importados.xlsx;HDR=YES;IMEX=1', 'SELECT * FROM [Listado de Productos$]');
+	FROM OPENROWSET('Microsoft.ACE.OLEDB.16.0', 'Excel 12.0;Database=E:\UNIVERSIDAD\BBDDAplicada\TP final\TP_integrador_Archivos\Productos\Productos_importados.xlsx;HDR=YES;IMEX=1', 'SELECT * FROM [Listado de Productos$]');
 
 	WITH TabParseada AS(
 		SELECT 
@@ -322,7 +322,7 @@ BEGIN
 
 	INSERT INTO #TempInfoCompImport(TEXTO)
 	SELECT CIUDAD + '|' + "REEMPLAZAR POR" + '|' + DIRECCION + '|' + HORARIO + '|' + TRY_CAST(TELEFONO AS VARCHAR(10))
-	FROM OPENROWSET('Microsoft.ACE.OLEDB.16.0', 'Excel 12.0;Database=C:\Users\parof\Documents\Documentos Varios\Universidad\Materias\Bases de datos aplicada\TP\TP_integrador_Archivos\Informacion_complementaria.xlsx', 'SELECT * FROM [sucursal$]');
+	FROM OPENROWSET('Microsoft.ACE.OLEDB.16.0', 'Excel 12.0;Database=E:\UNIVERSIDAD\BBDDAplicada\TP final\TP_integrador_Archivos\Informacion_complementaria.xlsx', 'SELECT * FROM [sucursal$]');
 
 
 	WITH TabParse AS(
@@ -357,7 +357,7 @@ BEGIN
 
 	INSERT INTO #TempInfoCompImport(TEXTO)
 	SELECT TRY_CAST("LEGAJO/ID" AS CHAR(6)) + '|' + NOMBRE + '|' + APELLIDO + '|' + TRY_CAST(TRY_CAST(DNI AS NUMERIC(8,0)) AS VARCHAR(8)) + '|' + DIRECCION + '|' + "EMAIL PERSONAL" + '|' + "EMAIL EMPRESA" + '|' + CARGO + '|' + SUCURSAL + '|' + TURNO
-	FROM OPENROWSET('Microsoft.ACE.OLEDB.16.0', 'Excel 12.0;Database=C:\Users\parof\Documents\Documentos Varios\Universidad\Materias\Bases de datos aplicada\TP\TP_integrador_Archivos\Informacion_complementaria.xlsx', 'SELECT * FROM [Empleados$A1:K17];');
+	FROM OPENROWSET('Microsoft.ACE.OLEDB.16.0', 'Excel 12.0;Database=E:\UNIVERSIDAD\BBDDAplicada\TP final\TP_integrador_Archivos\Informacion_complementaria.xlsx', 'SELECT * FROM [Empleados$A1:K17];');
 
 	WITH TablaParse AS(
 		SELECT ID, Parte, NumParte
@@ -400,12 +400,12 @@ BEGIN
 
 	INSERT INTO Sales.Mediopago(MedPagoAReemp, Descripcion)
 	SELECT F2, F3
-	FROM OPENROWSET('Microsoft.ACE.OLEDB.16.0', 'Excel 12.0;Database=C:\Users\parof\Documents\Documentos Varios\Universidad\Materias\Bases de datos aplicada\TP\TP_integrador_Archivos\Informacion_complementaria.xlsx', 'SELECT * FROM [medios de pago$];');
+	FROM OPENROWSET('Microsoft.ACE.OLEDB.16.0', 'Excel 12.0;Database=E:\UNIVERSIDAD\BBDDAplicada\TP final\TP_integrador_Archivos\Informacion_complementaria.xlsx', 'SELECT * FROM [medios de pago$];');
 
 
 	INSERT INTO Production.LineaProducto (Descripcion, Prod)
 	SELECT "LÍNEA DE PRODUCTO", PRODUCTO
-	FROM OPENROWSET('Microsoft.ACE.OLEDB.16.0', 'Excel 12.0;Database=C:\Users\parof\Documents\Documentos Varios\Universidad\Materias\Bases de datos aplicada\TP\TP_integrador_Archivos\Informacion_complementaria.xlsx', 'SELECT * FROM [Clasificacion productos$];'); 
+	FROM OPENROWSET('Microsoft.ACE.OLEDB.16.0', 'Excel 12.0;Database=E:\UNIVERSIDAD\BBDDAplicada\TP final\TP_integrador_Archivos\Informacion_complementaria.xlsx', 'SELECT * FROM [Clasificacion productos$];'); 
 
 	EXEC ddbba.InsertReg @Mod='I', @Txt = 'IMPOTAR PRODUCTOS DE INFORMACION_COMPLEMENTARIA.XLSX'
 END
@@ -423,7 +423,7 @@ BEGIN
 	);
 
 	BULK INSERT #TmpVentasIntermedio
-	FROM 'C:\Users\parof\Documents\Documentos Varios\Universidad\Materias\Bases de datos aplicada\TP\TP_integrador_Archivos\Ventas_registradas.csv' --CAMBIAR PATH POR PROPIO
+	FROM 'E:\UNIVERSIDAD\BBDDAplicada\TP final\TP_integrador_Archivos\Ventas_registradas.csv' --CAMBIAR PATH POR PROPIO
 	WITH(
 		FIELDTERMINATOR = ';',
 		ROWTERMINATOR = '0x0A',
@@ -530,22 +530,3 @@ BEGIN
 END
 GO
 
-EXEC Production.ImportCatalogo
-EXEC Production.ImportElectrodomesticos
-EXEC Production.ImportProductosImportados
-EXEC Production.ImportInfoComp
-EXEC Production.ImportVentas
-
-CREATE OR ALTER PROCEDURE ddbba.InformeMensual(@mes SMALLINT, @año INT)
-AS
-BEGIN
-	WITH VentasPorDiaDeSemana(Dia, Monto) as (
-		SELECT DATENAME(WEEKDAY, v.Fecha), p.Monto
-		FROM Sales.Venta v JOIN Sales.Pago p on v.IdPag = p.IdPago
-		WHERE MONTH(v.Fecha) = 1 AND YEAR(v.Fecha) = 2019
-	)
-
-	SELECT SUM(Monto) FROM VentasPorDiaDeSemana
-	GROUP BY Dia
-	FOR XML RAW('Dias'), elements, root('Informe')
-END
