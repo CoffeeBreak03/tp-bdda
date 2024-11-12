@@ -1,13 +1,13 @@
 ------------------------------------------------------------------
 --GRUPO: 14
---BASUALDO, NICOLÁS NAHUEL 44238788
+--BASUALDO, NICOLï¿½S NAHUEL 44238788
 --MARCONI, LUCAS MARTIN 45324860
 --PARODI, FRANCISCO MAXILIANO 44669305
---RODRIGUEZ, MARCOS LEÓN 45040212
+--RODRIGUEZ, MARCOS LEï¿½N 45040212
 ----------------------------------------------------------------
 
 -------------------------------------------------------
------------------- CREACIÓN DE BBDD -------------------
+------------------ CREACIï¿½N DE BBDD -------------------
 -------------------------------------------------------
 -- ENUNCIADO: Cree la base de datos --
 
@@ -19,9 +19,9 @@ GO
 
 
 -------------------------------------------------------
----------------- CREACIÓN DE ESQUEMAS -----------------
+---------------- CREACIï¿½N DE ESQUEMAS -----------------
 -------------------------------------------------------
--- ENUNCIADO: Genere esquemas para organizar de forma lógica los componentes del sistema y aplique esto en la creación de objetos. NO use el esquema "dbo" --
+-- ENUNCIADO: Genere esquemas para organizar de forma lï¿½gica los componentes del sistema y aplique esto en la creaciï¿½n de objetos. NO use el esquema "dbo" --
 
 IF SCHEMA_ID('ddbba') IS NULL
 	EXEC('CREATE SCHEMA ddbba');
@@ -40,7 +40,7 @@ IF SCHEMA_ID('Person') IS NULL
 GO
 
 -------------------------------------------------------
------------------ CREACIÓN DE TABLAS ------------------
+----------------- CREACIï¿½N DE TABLAS ------------------
 -------------------------------------------------------
 -- ENUNCIADO: Cree entidades y relaciones. Incluya restricciones y claves. 
 
@@ -288,7 +288,7 @@ GO
 -------------------------------------------------------
 ------------- CREACION DE STORE PROCEDURE -------------
 -------------------------------------------------------
--- ENUNCIADO: Genere store procedures para manejar la inserción, modificado, borrado de cada tabla. --
+-- ENUNCIADO: Genere store procedures para manejar la inserciï¿½n, modificado, borrado de cada tabla. --
 
 
 --- PARA TABLA REGISTRO ---
@@ -329,7 +329,7 @@ BEGIN
 	ELSE
 	BEGIN
 		EXEC ddbba.InsertReg @Mod='I', @Txt = 'ERROR EN INSERTAR REGISTRO EN TABLA SUCURSAL';
-		RAISERROR('DIRECCIÓN DE SUCCURSAL DUPLICADA %s', 16, 1, @Direccion);
+		RAISERROR('DIRECCIï¿½N DE SUCCURSAL DUPLICADA %s', 16, 1, @Direccion);
 	END
 	
 END
@@ -350,7 +350,7 @@ BEGIN
 	ELSE
 	BEGIN
 		EXEC ddbba.InsertReg @Mod='D', @Txt = 'ERROR EN ID PARA ELIMINAR REGISTRO EN TABLA SUCURSAL';
-		RAISERROR('ID DE SUCURSAL INVÁLIDA %d', 16, 1, @IdSuc);
+		RAISERROR('ID DE SUCURSAL INVï¿½LIDA %d', 16, 1, @IdSuc);
 	END
 END
 GO
@@ -374,7 +374,7 @@ BEGIN
 	ELSE
 	BEGIN
 		EXEC ddbba.InsertReg @Mod='U', @Txt = 'ERROR DE ID PARA ACTUALIZAR REGISTRO EN TABLA SUCURSAL';
-		RAISERROR('ID DE SUCURSAL INVÁLIDA %d', 16, 1, @IdSuc);
+		RAISERROR('ID DE SUCURSAL INVï¿½LIDA %d', 16, 1, @IdSuc);
 	END
 END
 GO
@@ -397,7 +397,7 @@ BEGIN
 	ELSE
 	BEGIN
 		EXEC ddbba.InsertReg @Mod='I', @Txt = N'ERROR EN INSERTAR REGISTRO EN TABLA LINEA PRODUCTO / CATEGORIA DUPLICADA';
-		RAISERROR('CATEGORÍA DUPLICADA %s', 16, 1, @Descripcion);
+		RAISERROR('CATEGORï¿½A DUPLICADA %s', 16, 1, @Descripcion);
 	END
 END
 GO
@@ -417,7 +417,7 @@ BEGIN
 	ELSE
 	BEGIN
 		EXEC ddbba.InsertReg @Mod='D', @Txt = N'ERROR EN ID PARA ELIMINAR REGISTRO EN TABLA LINEA PRODUCTO';
-		RAISERROR('ID DE LÍNEA DE PRODUCTO INVÁLIDO %d', 16, 1, @IdLin);
+		RAISERROR('ID DE Lï¿½NEA DE PRODUCTO INVï¿½LIDO %d', 16, 1, @IdLin);
 	END
 END
 GO
@@ -439,14 +439,14 @@ BEGIN
 		END
 		ELSE
 		BEGIN
-			EXEC ddbba.InsertReg @Mod='U', @Txt = N'ERROR EN DESCRIPCIÓN PARA ACTUALIZAR REGISTRO EN TABLA LINEA PRODUCTO';
-			RAISERROR('CATEGORÍA EXISTENTE %s', 16, 1, @DescN);
+			EXEC ddbba.InsertReg @Mod='U', @Txt = N'ERROR EN DESCRIPCIï¿½N PARA ACTUALIZAR REGISTRO EN TABLA LINEA PRODUCTO';
+			RAISERROR('CATEGORï¿½A EXISTENTE %s', 16, 1, @DescN);
 		END
 	END
 	ELSE
 	BEGIN
 		EXEC ddbba.InsertReg @Mod='U', @Txt = N'ERROR EN ID PARA ACTUALIZAR REGISTRO EN TABLA LINEA PRODUCTO';
-		RAISERROR('ID DE LÍNEA DE PRODUCTO INVÁLIDO %d', 16, 1, @IdLin);
+		RAISERROR('ID DE Lï¿½NEA DE PRODUCTO INVï¿½LIDO %d', 16, 1, @IdLin);
 	END
 END
 GO
@@ -482,7 +482,7 @@ BEGIN
 	ELSE
 	BEGIN
 		EXEC ddbba.InsertReg @Mod='I', @Txt = 'ERROR EN INSERTAR REGISTRO EN TABLA PRODUCTO';
-		RAISERROR('LINEA DE PRODUCTO ERRÓNEA %d', 16, 1, @IdLinProd);
+		RAISERROR('LINEA DE PRODUCTO ERRï¿½NEA %d', 16, 1, @IdLinProd);
 	END
 
 	
@@ -641,12 +641,12 @@ BEGIN
 		SET Baja = GETDATE()
 		WHERE IdTipoCli = @IdTCli;
 
-		EXEC ddbba.InsertReg @Mod='D', @Txt = N'BORRADO LÓGICO DE REGISTRO EN TABLA TIPO CLIENTE';
+		EXEC ddbba.InsertReg @Mod='D', @Txt = N'BORRADO Lï¿½GICO DE REGISTRO EN TABLA TIPO CLIENTE';
 	END
 	ELSE
 	BEGIN
 		EXEC ddbba.InsertReg @Mod='D', @Txt = 'ERROR EN ID PARA ELIMINAR REGISTRO EN TABLA TIPO CLIENTE';
-		RAISERROR('ID TIPO CLIENTE INVÁLIDO %d', 16, 1, @IdTCli);
+		RAISERROR('ID TIPO CLIENTE INVï¿½LIDO %d', 16, 1, @IdTCli);
 	END
 END
 GO
@@ -674,7 +674,7 @@ BEGIN
 	ELSE
 	BEGIN
 		EXEC ddbba.InsertReg @Mod='I', @Txt = 'ERROR PARA INSERTAR REGISTRO EN TABLA CLIENTE';
-		RAISERROR('TIPO DE CLIENTE INVÁLIDO %s', 16, 1, @TipoCli);
+		RAISERROR('TIPO DE CLIENTE INVï¿½LIDO %s', 16, 1, @TipoCli);
 	END
 END
 GO
@@ -694,7 +694,7 @@ BEGIN
 	ELSE
 	BEGIN
 		EXEC ddbba.InsertReg @Mod='D', @Txt = 'ERROR PARA INSERTAR REGISTRO EN TABLA CLIENTE';
-		RAISERROR('ID CLIENTE INVÁLIDO %d', 16, 1, @IdCliente);
+		RAISERROR('ID CLIENTE INVï¿½LIDO %d', 16, 1, @IdCliente);
 	END
 END
 GO
@@ -771,7 +771,7 @@ BEGIN
 END
 GO
 
-CREATE OR ALTER PROCEDURE Sales.DeleteFactura	--BORRADO LÓGICO
+CREATE OR ALTER PROCEDURE Sales.DeleteFactura	--BORRADO Lï¿½GICO
 	@NroFactura INT
 AS
 BEGIN
@@ -808,13 +808,13 @@ BEGIN
 	END
 	ELSE
 	BEGIN
-		EXEC ddbba.InsertReg @Mod = 'I', @Txt = N'ERROR EN INSERTAR REGISTRO EN TABLA MEDIO DE PAGO / DESCRIPCIÓN DUPLICADA';
+		EXEC ddbba.InsertReg @Mod = 'I', @Txt = N'ERROR EN INSERTAR REGISTRO EN TABLA MEDIO DE PAGO / DESCRIPCIï¿½N DUPLICADA';
 		RAISERROR('MEDIO DE PAGO REPETIDO %s', 16, 1, @Desc);
 	END
 END
 GO
 
-CREATE OR ALTER PROCEDURE Sales.DeleteMedPag	--BORRADO LÓGICO
+CREATE OR ALTER PROCEDURE Sales.DeleteMedPag	--BORRADO Lï¿½GICO
 	@IdMedPag INT
 AS
 BEGIN
@@ -824,12 +824,12 @@ BEGIN
 		SET Baja = GETDATE()
 		WHERE IdMedPago = @IdMedPag;
 
-		EXEC ddbba.InsertReg @Mod='D', @Txt = N'BORRADO LÓGICO REGISTRO EN TABLA MEDIO DE PAGO';
+		EXEC ddbba.InsertReg @Mod='D', @Txt = N'BORRADO Lï¿½GICO REGISTRO EN TABLA MEDIO DE PAGO';
 	END
 	ELSE
 	BEGIN
 		EXEC ddbba.InsertReg @Mod='D', @Txt = 'ERROR EN ID PARA ELIMINAR REGISTRO EN TABLA MEDIO DE PAGO';
-		RAISERROR('ID MEDIO DE PAGO INVÁLIDO %d', 16, 1, @IdMedPag);
+		RAISERROR('ID MEDIO DE PAGO INVï¿½LIDO %d', 16, 1, @IdMedPag);
 	END
 END
 GO
@@ -860,7 +860,7 @@ BEGIN
 	ELSE
 	BEGIN
 		EXEC ddbba.InsertReg @Mod='I', @Txt = 'ERROR PARA INSERTAR REGISTRO EN TABLA PAGO';
-		RAISERROR('ID DE PAGO INVÁLIDO %d', 16, 1, @MedPago);
+		RAISERROR('ID DE PAGO INVï¿½LIDO %d', 16, 1, @MedPago);
 	END
 END
 GO
@@ -880,8 +880,8 @@ BEGIN
 	END
 	ELSE
 	BEGIN
-		EXEC ddbba.InsertReg @Mod='U', @Txt = N'ERROR EN ACTUALIZAR REGISTRO EN TABLA PAGO / ID INVÁLIDO';
-		RAISERROR('ID PAGO INVÁLIDO %d', 16, 1, @IdPago);
+		EXEC ddbba.InsertReg @Mod='U', @Txt = N'ERROR EN ACTUALIZAR REGISTRO EN TABLA PAGO / ID INVï¿½LIDO';
+		RAISERROR('ID PAGO INVï¿½LIDO %d', 16, 1, @IdPago);
 	END
 END
 GO
@@ -935,7 +935,7 @@ BEGIN
 				WHEN @EstadoVenta = 'ANULADA' THEN 'ANULADO'
 			END;
 
-		--ACTUALIZACIÓN EN TABLA PAGO--
+		--ACTUALIZACIï¿½N EN TABLA PAGO--
 		DECLARE @IdPag INT = (SELECT IdPag FROM Sales.Venta WHERE NroVenta = @NroVenta);
 
 		EXEC Sales.UpdateEstadoPago @IdPago = @IdPag, @Estado = @EstadoPago;
@@ -951,7 +951,7 @@ BEGIN
 	ELSE
 	BEGIN
 		EXEC ddbba.InsertReg @Mod = 'U', @Txt = 'ERROR EN ACTUALIZAR ESTADO DE REGISTRO EN TABLA VENTA';
-		RAISERROR('NRO VENTA INVÁLIDO %d', 16, 1, @NroVenta);
+		RAISERROR('NRO VENTA INVï¿½LIDO %d', 16, 1, @NroVenta);
 	END
 END
 GO
@@ -975,20 +975,20 @@ BEGIN
 
 		EXEC ddbba.InsertReg @Mod = 'I', @Txt = 'INGRESAR REGISTRO EN TABLA DETALLE VENTA' 
 
-		--ACTUALIZACIÓN EN TABLA PRODUCTO--
+		--ACTUALIZACIï¿½N EN TABLA PRODUCTO--
 		UPDATE Production.Producto
 		SET CantVendida = CantVendida + @CantCompra
 		WHERE IdProd = @IdProd
 
 		DECLARE @CADENA VARCHAR(MAX)
-		SET @CADENA = (SELECT N'ACTUALIZACIÓN DE CANTIDAD DE PRODUCTO ' + CAST(IdProd AS VARCHAR(10)) FROM Production.Producto WHERE IdProd = @IdProd)
+		SET @CADENA = (SELECT N'ACTUALIZACIï¿½N DE CANTIDAD DE PRODUCTO ' + CAST(IdProd AS VARCHAR(10)) FROM Production.Producto WHERE IdProd = @IdProd)
 
 		EXEC ddbba.InsertReg @Mod='U', @Txt = @CADENA
 	END
 	ELSE
 	BEGIN
 		EXEC ddbba.InsertReg @Mod = 'I', @Txt = 'ERROR EN INGRESAR REGISTRO EN TABLA DETALLE VENTA';
-		RAISERROR('NRO VENTA INVÁLIDO %d', 16, 1, @NroVenta);
+		RAISERROR('NRO VENTA INVï¿½LIDO %d', 16, 1, @NroVenta);
 	END
 END
 GO
@@ -1028,18 +1028,18 @@ BEGIN
 		SET Estado = 'CANCELADA', FechaEstado = GETDATE()
 		WHERE IdVenta = @IdVent;
 
-		EXEC ddbba.InsertReg @Mod = 'I', @Txt = 'INSERTAR REGISTRO DE TABLA NOTA DE CRÉDITO';
+		EXEC ddbba.InsertReg @Mod = 'I', @Txt = 'INSERTAR REGISTRO DE TABLA NOTA DE CRï¿½DITO';
     END
     ELSE
     BEGIN
-		EXEC ddbba.InsertReg @Mod = 'I', @Txt = 'ERROR EN INSERTAR REGISTRO DE TABLA NOTA DE CRÉDITO';
+		EXEC ddbba.InsertReg @Mod = 'I', @Txt = 'ERROR EN INSERTAR REGISTRO DE TABLA NOTA DE CRï¿½DITO';
         RAISERROR('EL MONTO DE LA NC EXCEDE EL MONTO DE FACTURA.', 16, 1);
     END
 END;
 GO
 
 
-CREATE OR ALTER PROCEDURE Sales.DeleteNotaCredito	--BORRADO LÓGICO
+CREATE OR ALTER PROCEDURE Sales.DeleteNotaCredito	--BORRADO Lï¿½GICO
 	@IdNotaCredito INT
 AS
 BEGIN
@@ -1049,17 +1049,17 @@ BEGIN
 		SET Baja = GETDATE()
 		WHERE IdNotaCredito = @IdNotaCredito;
 
-		EXEC ddbba.InsertReg @Mod = 'D', @Txt = 'ELIMINAR REGISTRO DE TABLA NOTA DE CRÉDITO';
+		EXEC ddbba.InsertReg @Mod = 'D', @Txt = 'ELIMINAR REGISTRO DE TABLA NOTA DE CRï¿½DITO';
 	END
 	ELSE
 	BEGIN
-		EXEC ddbba.InsertReg @Mod = 'D', @Txt = 'ERROR EN BORRAR REGISTRO DE TABLA NOTA DE CRÉDITO';
+		EXEC ddbba.InsertReg @Mod = 'D', @Txt = 'ERROR EN BORRAR REGISTRO DE TABLA NOTA DE CRï¿½DITO';
         RAISERROR('EL MONTO DE LA NC EXCEDE EL MONTO DE FACTURA.', 16, 1);
 	END
 END
 
 -------------------------------------------------------
------------------ CREACIÓN DE INDICES -----------------
+----------------- CREACIï¿½N DE INDICES -----------------
 -------------------------------------------------------
 -- AYUDA A LOS UPDATE Y CONSULTAS DE LOS SP
 
@@ -1090,7 +1090,7 @@ GO
 
 
 -------------------------------------------------------
----------------- CREACIÓN DE FUCIONES -----------------
+---------------- CREACIï¿½N DE FUCIONES -----------------
 -------------------------------------------------------
 ----------- UTILIZADAS EN LAS IMPOTACIONES ------------
 
@@ -1102,7 +1102,7 @@ RETURNS @TablaDiv TABLE (
 AS
 BEGIN
 	DECLARE @actPos INT = 1,
-			@parte NVARCHAR(MAX) = '',--INICIALIZO LA PARTE EN VACÍO
+			@parte NVARCHAR(MAX) = '',--INICIALIZO LA PARTE EN VACï¿½O
 			@Comillas BIT = 0,
 			@NumParte INT = 1;
 
@@ -1142,7 +1142,7 @@ BEGIN
 			SET @actPos = @actPos + 1;
 	END
 
-		-- INSERTA EL REGISTRO QUE QUEDA AL FINAL (FECHA INGRESO) YA QUE NO LLEGA AL SEPARADOR PARA INSERTAR EN LA CONDICIÓN
+		-- INSERTA EL REGISTRO QUE QUEDA AL FINAL (FECHA INGRESO) YA QUE NO LLEGA AL SEPARADOR PARA INSERTAR EN LA CONDICIï¿½N
 	IF LEN(@parte) > 0 OR @actualLetra = @separador
 		INSERT INTO @TablaDiv (Parte, NumParte) VALUES (LTRIM(RTRIM(@parte)), @NumParte);
 	RETURN;
@@ -1158,7 +1158,7 @@ CREATE OR ALTER FUNCTION ddbba.ParseExcelReg(@Cadena NVARCHAR(MAX))
 AS
 BEGIN
 	DECLARE @actPos INT = 1,
-            @parte NVARCHAR(MAX) = '',	--INICIALIZO LA PARTE EN VACÍO
+            @parte NVARCHAR(MAX) = '',	--INICIALIZO LA PARTE EN VACï¿½O
             @NumParte INT = 1;
 	
 	WHILE @actPos <= LEN(@Cadena)
@@ -1215,7 +1215,7 @@ BEGIN
     END
     ELSE
     BEGIN
-        -- SI LA PRIMERA PARTE NO ES NÚMERICA O SÍ PERO CON UNIDAD DE PESO AL LADO, SIGNIFICA QUE LA CADENA ES UNA REFERENCIA SIN CANTIDAD
+        -- SI LA PRIMERA PARTE NO ES Nï¿½MERICA O Sï¿½ PERO CON UNIDAD DE PESO AL LADO, SIGNIFICA QUE LA CADENA ES UNA REFERENCIA SIN CANTIDAD
         SET @Cantidad = 1
         SET @Referencia = @Cadena 
     END
