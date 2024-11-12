@@ -23,28 +23,20 @@ GO
 -------------------------------------------------------
 -- ENUNCIADO: Genere esquemas para organizar de forma lógica los componentes del sistema y aplique esto en la creación de objetos. NO use el esquema "dbo" --
 
-IF NOT EXISTS (SELECT 1 FROM sys.schemas WHERE name = 'ddbba')
-BEGIN
-	CREATE SCHEMA ddbba;
-END
+IF SCHEMA_ID('ddbba') IS NULL
+	EXEC('CREATE SCHEMA ddbba');
 GO
 
-IF NOT EXISTS (SELECT 1 FROM sys.schemas WHERE name = 'Production')
-BEGIN
-	CREATE SCHEMA Production;
-END
+IF SCHEMA_ID('Production') IS NULL
+	EXEC('CREATE SCHEMA Production');
 GO
 
-IF NOT EXISTS (SELECT 1 FROM sys.schemas WHERE name = 'Sales')
-BEGIN
-	CREATE SCHEMA Sales;
-END
+IF SCHEMA_ID('Sales') IS NULL
+	EXEC('CREATE SCHEMA Sales');
 GO
 
-IF NOT EXISTS (SELECT 1 FROM sys.schemas WHERE name = 'Person')
-BEGIN
-	CREATE SCHEMA Person;
-END
+IF SCHEMA_ID('Person') IS NULL
+	EXEC('CREATE SCHEMA Person');
 GO
 
 -------------------------------------------------------
