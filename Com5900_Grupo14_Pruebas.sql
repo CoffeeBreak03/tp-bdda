@@ -16,7 +16,7 @@ EXEC Production.UpdateUbicacionSucursal
     @IdSuc = 10, 
     @DireccionN = 'Av. Falsa 123', 
     @LocalidadN = 'Lomas del Mirador', 
-    @ProvinciaN = 'Capital';
+    @ProvinciaN = 'Provincia';
 
 SELECT * FROM Production.Sucursal
 
@@ -40,10 +40,6 @@ EXEC Production.InsertProd
 EXEC Production.UpdatePriceProd 
 	@IdProd = 2, 
 	@PriceN = 180.75;	
-
-EXEC Production.UpdatePriceProd 
-	@IdProd = 9999999, 
-	@PriceN = 18.75;
 
 EXEC Production.DeleteProd
 	@IdProd = 1;
@@ -125,13 +121,20 @@ EXEC Sales.UpdateEstadoVenta
 
 SELECT * FROM Sales.Venta
 
+--Detalle ventas
+EXEC Sales.InsertDetVenta
+	@CantCompra = 12,
+	@Subtotal = 45.23,
+	@NroVenta = 1,
+	@IdProd =2 ;
+
 --Tipo Factura
 EXEC Sales.InsertTipoFac 
 	@TipFac = 'A',
 	@Desc = 'CONSUMIDOR';
 
 EXEC Sales.DeleteTipoFac
-	@IdTipFac = 'A';
+	@IdTipFac = 1;
 
 SELECT * FROM Sales.TipoFactura
 
