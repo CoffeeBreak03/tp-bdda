@@ -1,13 +1,13 @@
 ------------------------------------------------------------------
 --GRUPO: 14
---BASUALDO, NICOLï¿½S NAHUEL 44238788
+--BASUALDO, NICOLÁS NAHUEL 44238788
 --MARCONI, LUCAS MARTIN 45324860
 --PARODI, FRANCISCO MAXILIANO 44669305
---RODRIGUEZ, MARCOS LEï¿½N 45040212
+--RODRIGUEZ, MARCOS LEÓN 45040212
 ----------------------------------------------------------------
 
 -------------------------------------------------------
------------------- CREACIï¿½N DE BBDD -------------------
+------------------ CREACIÓN DE BBDD -------------------
 -------------------------------------------------------
 -- ENUNCIADO: Cree la base de datos --
 
@@ -19,9 +19,9 @@ GO
 
 
 -------------------------------------------------------
----------------- CREACIï¿½N DE ESQUEMAS -----------------
+---------------- CREACIÓN DE ESQUEMAS -----------------
 -------------------------------------------------------
--- ENUNCIADO: Genere esquemas para organizar de forma lï¿½gica los componentes del sistema y aplique esto en la creaciï¿½n de objetos. NO use el esquema "dbo" --
+-- ENUNCIADO: Genere esquemas para organizar de forma lógica los componentes del sistema y aplique esto en la creación de objetos. NO use el esquema "dbo" --
 
 IF SCHEMA_ID('ddbba') IS NULL
 	EXEC('CREATE SCHEMA ddbba');
@@ -40,7 +40,7 @@ IF SCHEMA_ID('Person') IS NULL
 GO
 
 -------------------------------------------------------
------------------ CREACIï¿½N DE TABLAS ------------------
+----------------- CREACIÓN DE TABLAS ------------------
 -------------------------------------------------------
 -- ENUNCIADO: Cree entidades y relaciones. Incluya restricciones y claves. 
 
@@ -64,9 +64,9 @@ BEGIN
 		IdSuc INT IDENTITY(10,1) PRIMARY KEY,
 		Direccion VARCHAR(50) NOT NULL,
 		Localidad CHAR(20),
-		Provincia VARCHAR(24),
-		Horario VARCHAR(25),
-		Telefono INT,
+		Provincia VARCHAR(26),
+		Horario VARCHAR(44),
+		Telefono CHAR(10),
 		CiudadOrig CHAR(10),
 		Baja DATE DEFAULT NULL
 	);
@@ -162,46 +162,15 @@ BEGIN
 	);
 END
 
-IF OBJECT_ID('Sales.Mediopago', 'U') IS NULL
-BEGIN
-	CREATE TABLE Sales.Mediopago
-	(
-		IdMedPago INT IDENTITY(1,1) PRIMARY KEY,
-		MedPagoAReemp CHAR(10),
-		Descripcion CHAR(15),
-		Vigencia DATE DEFAULT GETDATE(),
-		Baja DATE DEFAULT NULL
-	);
-END
-
-IF OBJECT_ID('Sales.Pago', 'U') IS NULL
-BEGIN
-	CREATE TABLE Sales.Pago
-	(
-		IdPago INT IDENTITY(1,1) PRIMARY KEY,
-		NroPago VARCHAR(23) UNIQUE,	--0000003100099475144530
-		IdMedPago INT NOT NULL,
-		Monto NUMERIC(7,2) NOT NULL,
-		Estado CHAR(10) DEFAULT 'ACREDITADO',
-		FechaEstado DATE DEFAULT GETDATE(),
-	
-		CONSTRAINT FK_MedPag FOREIGN KEY (IdMedPago)
-			REFERENCES Sales.Mediopago(IdMedPago),
-		CONSTRAINT CK_EstadoPago CHECK (Estado IN ('ACREDITADO', 'ANULADO'))
-	);
-END
-
 IF OBJECT_ID('Sales.Venta', 'U') IS NULL
 BEGIN
 	CREATE TABLE Sales.Venta
 	(
 		IdVenta INT IDENTITY(1,1) PRIMARY KEY,
-		NroVenta INT UNIQUE,
 		Fecha DATE NOT NULL,
 		Hora TIME NOT NULL,
 		IdSuc INT NOT NULL,
 		IdEmp INT NOT NULL,
-		IdPag INT NOT NULL,
 		IdCli INT NOT NULL,
 		Estado CHAR(7) DEFAULT 'ACTIVA',
 		FechaEstado DATE DEFAULT GETDATE(),
@@ -210,8 +179,6 @@ BEGIN
 			REFERENCES Production.Sucursal (IdSuc),
 		CONSTRAINT FK_Emp FOREIGN KEY (IdEmp)
 			REFERENCES Person.Empleado (IdEmp),
-		CONSTRAINT FK_Pag FOREIGN KEY (IdPag)
-			REFERENCES Sales.Pago (IdPago),
 		CONSTRAINT FK_Cli FOREIGN KEY (IdCli)
 			REFERENCES Person.Cliente (IdCli),
 		CONSTRAINT CK_EstadoVenta CHECK (Estado IN ('ACTIVA', 'ANULADA'))
@@ -235,6 +202,38 @@ BEGIN
 	);
 END
 
+IF OBJECT_ID('Sales.Mediopago', 'U') IS NULL
+BEGIN
+	CREATE TABLE Sales.Mediopago
+	(
+		IdMedPago INT IDENTITY(1,1) PRIMARY KEY,
+		MedPagoAReemp CHAR(11),
+		Descripcion CHAR(21),
+		Vigencia DATE DEFAULT GETDATE(),
+		Baja DATE DEFAULT NULL
+	);
+END
+
+IF OBJECT_ID('Sales.Pago', 'U') IS NULL
+BEGIN
+	CREATE TABLE Sales.Pago
+	(
+		IdPago INT IDENTITY(1,1) PRIMARY KEY,
+		NroPago CHAR(22),	--0000003100099475144530
+		IdVenta INT NOT NULL,
+		IdMedPago INT NOT NULL,
+		Monto NUMERIC(7,2) NOT NULL,
+		Estado CHAR(10) DEFAULT 'ACREDITADO',
+		FechaEstado DATE DEFAULT GETDATE(),
+	
+		CONSTRAINT FK_Vent FOREIGN KEY (IdVenta)
+			REFERENCES Sales.Venta(IdVenta),
+		CONSTRAINT FK_MedPag FOREIGN KEY (IdMedPago)
+			REFERENCES Sales.Mediopago(IdMedPago),
+		CONSTRAINT CK_EstadoPago CHECK (Estado IN ('ACREDITADO', 'ANULADO'))
+	);
+END
+
 IF OBJECT_ID('Sales.TipoFactura', 'U') IS NULL
 BEGIN
 	CREATE TABLE Sales.TipoFactura
@@ -252,17 +251,16 @@ BEGIN
 	CREATE TABLE Sales.Factura
 	(
 		IdFact INT IDENTITY(1,1) PRIMARY KEY,
-		NroFact INT UNIQUE,
+		NroFact CHAR(12),
 		IdTipoFac INT NOT NULL,
 		FechaEmision DATE NOT NULL,
 		Total NUMERIC(7,2),
 		IdVent INT NOT NULL,
 		Baja DATE DEFAULT NULL,
 
-		CONSTRAINT CK_NFac CHECK(NroFact BETWEEN 100000000 AND 999999999), --PARA QUE VERIFIQUE QUE HAYA 9 DIGITOS
 		CONSTRAINT FK_TipoF FOREIGN KEY (IdTipoFac)
 			REFERENCES Sales.TipoFactura (IdTipoFac),
-		CONSTRAINT FK_Vent FOREIGN KEY (IdVent)
+		CONSTRAINT FK_VentFac FOREIGN KEY (IdVent)
 			REFERENCES Sales.Venta (IdVenta)
 	);
 END
@@ -288,7 +286,7 @@ GO
 -------------------------------------------------------
 ------------- CREACION DE STORE PROCEDURE -------------
 -------------------------------------------------------
--- ENUNCIADO: Genere store procedures para manejar la inserciï¿½n, modificado, borrado de cada tabla. --
+-- ENUNCIADO: Genere store procedures para manejar la inserción, modificado, borrado de cada tabla. --
 
 
 --- PARA TABLA REGISTRO ---
@@ -329,7 +327,7 @@ BEGIN
 	ELSE
 	BEGIN
 		EXEC ddbba.InsertReg @Mod='I', @Txt = 'ERROR EN INSERTAR REGISTRO EN TABLA SUCURSAL';
-		RAISERROR('DIRECCIï¿½N DE SUCCURSAL DUPLICADA %s', 16, 1, @Direccion);
+		RAISERROR('DIRECCIÓN DE SUCCURSAL DUPLICADA %s', 16, 1, @Direccion);
 	END
 	
 END
@@ -350,7 +348,7 @@ BEGIN
 	ELSE
 	BEGIN
 		EXEC ddbba.InsertReg @Mod='D', @Txt = 'ERROR EN ID PARA ELIMINAR REGISTRO EN TABLA SUCURSAL';
-		RAISERROR('ID DE SUCURSAL INVï¿½LIDA %d', 16, 1, @IdSuc);
+		RAISERROR('ID DE SUCURSAL INVÁLIDA %d', 16, 1, @IdSuc);
 	END
 END
 GO
@@ -374,7 +372,7 @@ BEGIN
 	ELSE
 	BEGIN
 		EXEC ddbba.InsertReg @Mod='U', @Txt = 'ERROR DE ID PARA ACTUALIZAR REGISTRO EN TABLA SUCURSAL';
-		RAISERROR('ID DE SUCURSAL INVï¿½LIDA %d', 16, 1, @IdSuc);
+		RAISERROR('ID DE SUCURSAL INVÁLIDA %d', 16, 1, @IdSuc);
 	END
 END
 GO
@@ -397,7 +395,7 @@ BEGIN
 	ELSE
 	BEGIN
 		EXEC ddbba.InsertReg @Mod='I', @Txt = N'ERROR EN INSERTAR REGISTRO EN TABLA LINEA PRODUCTO / CATEGORIA DUPLICADA';
-		RAISERROR('CATEGORï¿½A DUPLICADA %s', 16, 1, @Descripcion);
+		RAISERROR('CATEGORÍA DUPLICADA %s', 16, 1, @Descripcion);
 	END
 END
 GO
@@ -417,7 +415,7 @@ BEGIN
 	ELSE
 	BEGIN
 		EXEC ddbba.InsertReg @Mod='D', @Txt = N'ERROR EN ID PARA ELIMINAR REGISTRO EN TABLA LINEA PRODUCTO';
-		RAISERROR('ID DE Lï¿½NEA DE PRODUCTO INVï¿½LIDO %d', 16, 1, @IdLin);
+		RAISERROR('ID DE LÍNEA DE PRODUCTO INVÁLIDO %d', 16, 1, @IdLin);
 	END
 END
 GO
@@ -439,14 +437,14 @@ BEGIN
 		END
 		ELSE
 		BEGIN
-			EXEC ddbba.InsertReg @Mod='U', @Txt = N'ERROR EN DESCRIPCIï¿½N PARA ACTUALIZAR REGISTRO EN TABLA LINEA PRODUCTO';
-			RAISERROR('CATEGORï¿½A EXISTENTE %s', 16, 1, @DescN);
+			EXEC ddbba.InsertReg @Mod='U', @Txt = N'ERROR EN DESCRIPCIÓN PARA ACTUALIZAR REGISTRO EN TABLA LINEA PRODUCTO';
+			RAISERROR('CATEGORÍA EXISTENTE %s', 16, 1, @DescN);
 		END
 	END
 	ELSE
 	BEGIN
 		EXEC ddbba.InsertReg @Mod='U', @Txt = N'ERROR EN ID PARA ACTUALIZAR REGISTRO EN TABLA LINEA PRODUCTO';
-		RAISERROR('ID DE Lï¿½NEA DE PRODUCTO INVï¿½LIDO %d', 16, 1, @IdLin);
+		RAISERROR('ID DE LÍNEA DE PRODUCTO INVÁLIDO %d', 16, 1, @IdLin);
 	END
 END
 GO
@@ -482,7 +480,7 @@ BEGIN
 	ELSE
 	BEGIN
 		EXEC ddbba.InsertReg @Mod='I', @Txt = 'ERROR EN INSERTAR REGISTRO EN TABLA PRODUCTO';
-		RAISERROR('LINEA DE PRODUCTO ERRï¿½NEA %d', 16, 1, @IdLinProd);
+		RAISERROR('LINEA DE PRODUCTO ERRÓNEA %d', 16, 1, @IdLinProd);
 	END
 
 	
@@ -641,12 +639,12 @@ BEGIN
 		SET Baja = GETDATE()
 		WHERE IdTipoCli = @IdTCli;
 
-		EXEC ddbba.InsertReg @Mod='D', @Txt = N'BORRADO Lï¿½GICO DE REGISTRO EN TABLA TIPO CLIENTE';
+		EXEC ddbba.InsertReg @Mod='D', @Txt = N'BORRADO LÓGICO DE REGISTRO EN TABLA TIPO CLIENTE';
 	END
 	ELSE
 	BEGIN
 		EXEC ddbba.InsertReg @Mod='D', @Txt = 'ERROR EN ID PARA ELIMINAR REGISTRO EN TABLA TIPO CLIENTE';
-		RAISERROR('ID TIPO CLIENTE INVï¿½LIDO %d', 16, 1, @IdTCli);
+		RAISERROR('ID TIPO CLIENTE INVÁLIDO %d', 16, 1, @IdTCli);
 	END
 END
 GO
@@ -674,7 +672,7 @@ BEGIN
 	ELSE
 	BEGIN
 		EXEC ddbba.InsertReg @Mod='I', @Txt = 'ERROR PARA INSERTAR REGISTRO EN TABLA CLIENTE';
-		RAISERROR('TIPO DE CLIENTE INVï¿½LIDO %s', 16, 1, @TipoCli);
+		RAISERROR('TIPO DE CLIENTE INVÁLIDO %s', 16, 1, @TipoCli);
 	END
 END
 GO
@@ -694,7 +692,7 @@ BEGIN
 	ELSE
 	BEGIN
 		EXEC ddbba.InsertReg @Mod='D', @Txt = 'ERROR PARA INSERTAR REGISTRO EN TABLA CLIENTE';
-		RAISERROR('ID CLIENTE INVï¿½LIDO %d', 16, 1, @IdCliente);
+		RAISERROR('ID CLIENTE INVÁLIDO %d', 16, 1, @IdCliente);
 	END
 END
 GO
@@ -754,9 +752,9 @@ AS
 BEGIN
 	IF NOT EXISTS(SELECT 1 FROM Sales.Factura WHERE NroFact = @NroFactura) 
 		AND EXISTS(SELECT 1 FROM Sales.TipoFactura WHERE IdTipoFac = @IdTipoFac)
-		AND EXISTS(SELECT 1 FROM Sales.Venta WHERE NroVenta = @NroVent)
+		AND EXISTS(SELECT 1 FROM Sales.Venta WHERE IdVenta = @NroVent)
 		BEGIN
-			DECLARE @IdVent INT = (SELECT IdVenta FROM Sales.Venta WHERE NroVenta = @NroVent)
+			DECLARE @IdVent INT = (SELECT IdVenta FROM Sales.Venta WHERE IdVenta = @NroVent)
 		
 			INSERT INTO Sales.Factura (NroFact, IdTipoFac, FechaEmision, Total, IdVent)
 			VALUES (@NroFactura, @IdTipoFac, @Fecha, @Monto, @IdVent);
@@ -771,7 +769,7 @@ BEGIN
 END
 GO
 
-CREATE OR ALTER PROCEDURE Sales.DeleteFactura	--BORRADO Lï¿½GICO
+CREATE OR ALTER PROCEDURE Sales.DeleteFactura	--BORRADO LÓGICO
 	@NroFactura INT
 AS
 BEGIN
@@ -808,13 +806,13 @@ BEGIN
 	END
 	ELSE
 	BEGIN
-		EXEC ddbba.InsertReg @Mod = 'I', @Txt = N'ERROR EN INSERTAR REGISTRO EN TABLA MEDIO DE PAGO / DESCRIPCIï¿½N DUPLICADA';
+		EXEC ddbba.InsertReg @Mod = 'I', @Txt = N'ERROR EN INSERTAR REGISTRO EN TABLA MEDIO DE PAGO / DESCRIPCIÓN DUPLICADA';
 		RAISERROR('MEDIO DE PAGO REPETIDO %s', 16, 1, @Desc);
 	END
 END
 GO
 
-CREATE OR ALTER PROCEDURE Sales.DeleteMedPag	--BORRADO Lï¿½GICO
+CREATE OR ALTER PROCEDURE Sales.DeleteMedPag	--BORRADO LÓGICO
 	@IdMedPag INT
 AS
 BEGIN
@@ -824,12 +822,12 @@ BEGIN
 		SET Baja = GETDATE()
 		WHERE IdMedPago = @IdMedPag;
 
-		EXEC ddbba.InsertReg @Mod='D', @Txt = N'BORRADO Lï¿½GICO REGISTRO EN TABLA MEDIO DE PAGO';
+		EXEC ddbba.InsertReg @Mod='D', @Txt = N'BORRADO LÓGICO REGISTRO EN TABLA MEDIO DE PAGO';
 	END
 	ELSE
 	BEGIN
 		EXEC ddbba.InsertReg @Mod='D', @Txt = 'ERROR EN ID PARA ELIMINAR REGISTRO EN TABLA MEDIO DE PAGO';
-		RAISERROR('ID MEDIO DE PAGO INVï¿½LIDO %d', 16, 1, @IdMedPag);
+		RAISERROR('ID MEDIO DE PAGO INVÁLIDO %d', 16, 1, @IdMedPag);
 	END
 END
 GO
@@ -837,17 +835,19 @@ GO
 
 ---PARA TABLA PAGO---
 CREATE OR ALTER PROCEDURE Sales.InsertPago
-	@NroPago BIGINT,
+	@NroPago VARCHAR(22),
+	@IdVenta INT, 
 	@Monto NUMERIC(7,2),
 	@MedPago INT
 AS
 BEGIN
 	IF EXISTS (SELECT 1 FROM Sales.Mediopago WHERE IdMedPago = @MedPago)
+	AND EXISTS (SELECT 1 FROM Sales.Venta WHERE IdVenta = @IdVenta)
 	BEGIN
 		IF NOT EXISTS(SELECT 1 FROM Sales.Pago WHERE NroPago = @NroPago)
 		BEGIN
-			INSERT INTO Sales.Pago (NroPago, Monto, IdMedPago)
-			VALUES (@NroPago, @Monto, @MedPago);
+			INSERT INTO Sales.Pago (NroPago, Monto, IdMedPago, IdVenta)
+			VALUES (@NroPago, @Monto, @MedPago, @IdVenta);
 
 			EXEC ddbba.InsertReg @Mod='I', @Txt = 'INSERTAR REGISTRO EN TABLA PAGO';
 		END
@@ -860,7 +860,7 @@ BEGIN
 	ELSE
 	BEGIN
 		EXEC ddbba.InsertReg @Mod='I', @Txt = 'ERROR PARA INSERTAR REGISTRO EN TABLA PAGO';
-		RAISERROR('ID DE PAGO INVï¿½LIDO %d', 16, 1, @MedPago);
+		RAISERROR('ID DE PAGO INVÁLIDO %d', 16, 1, @MedPago);
 	END
 END
 GO
@@ -880,8 +880,8 @@ BEGIN
 	END
 	ELSE
 	BEGIN
-		EXEC ddbba.InsertReg @Mod='U', @Txt = N'ERROR EN ACTUALIZAR REGISTRO EN TABLA PAGO / ID INVï¿½LIDO';
-		RAISERROR('ID PAGO INVï¿½LIDO %d', 16, 1, @IdPago);
+		EXEC ddbba.InsertReg @Mod='U', @Txt = N'ERROR EN ACTUALIZAR REGISTRO EN TABLA PAGO / ID INVÁLIDO';
+		RAISERROR('ID PAGO INVÁLIDO %d', 16, 1, @IdPago);
 	END
 END
 GO
@@ -889,29 +889,23 @@ GO
 
 ---TABLA VENTA---
 CREATE OR ALTER PROCEDURE Sales.InsertVenta
-	@NroVenta INT,
 	@IdSuc INT,
 	@IdEmp INT,
-	@NroPago INT,
 	@IdCli INT
 AS
 BEGIN
-	IF NOT EXISTS (SELECT 1 FROM Sales.Venta WHERE NroVenta = @NroVenta)
-		AND EXISTS (SELECT 1 FROM Sales.Pago WHERE NroPago = @NroPago)
-		AND EXISTS (SELECT 1 FROM Person.Empleado WHERE IdEmp = @IdEmp)
+	IF EXISTS (SELECT 1 FROM Person.Empleado WHERE IdEmp = @IdEmp)
 		AND EXISTS (SELECT 1 FROM Production.Sucursal WHERE IdSuc = @IdSuc)
 	BEGIN
-		DECLARE @IdPag INT = (SELECT IdPago FROM Sales.Pago WHERE NroPago = @NroPago)
-
-		INSERT INTO Sales.Venta (NroVenta, IdSuc, IdEmp, IdPag, IdClI)
-		VALUES (@NroVenta, @IdSuc, @IdEmp, @NroPago, @IdCli)
+		INSERT INTO Sales.Venta (IdSuc, IdEmp, IdClI)
+		VALUES (@IdSuc, @IdEmp, @IdCli)
 
 		EXEC ddbba.InsertReg @Mod = 'I', @Txt = 'INSERTAR REGISTRO EN TABLA VENTA'
 	END
 	ELSE
 	BEGIN
 		EXEC ddbba.InsertReg @Mod = 'I', @Txt = 'ERROR EN INSERTAR REGISTRO EN TABLA VENTA';
-		RAISERROR('NRO VENTA EXISTENTE %d', 16, 1, @NroVenta);
+		RAISERROR('PARAMETROS INEXISTENTES', 16, 1);
 	END
 END
 GO
@@ -921,11 +915,11 @@ CREATE OR ALTER PROCEDURE Sales.UpdateEstadoVenta
 	@EstadoVenta CHAR(7)
 AS
 BEGIN
-	IF EXISTS (SELECT 1 FROM Sales.Venta WHERE NroVenta = @NroVenta)
+	IF EXISTS (SELECT 1 FROM Sales.Venta WHERE IdVenta = @NroVenta)
 	BEGIN
 		UPDATE Sales.Venta
 		SET Estado = @EstadoVenta, FechaEstado = GETDATE()
-		WHERE NroVenta = @NroVenta
+		WHERE IdVenta = @NroVenta
 
 		EXEC ddbba.InsertReg @Mod = 'U', @Txt = 'ACTUALIZAR ESTADO DE REGISTRO EN TABLA VENTA'
 
@@ -935,8 +929,8 @@ BEGIN
 				WHEN @EstadoVenta = 'ANULADA' THEN 'ANULADO'
 			END;
 
-		--ACTUALIZACIï¿½N EN TABLA PAGO--
-		DECLARE @IdPag INT = (SELECT IdPag FROM Sales.Venta WHERE NroVenta = @NroVenta);
+		--ACTUALIZACIÓN EN TABLA PAGO--
+		DECLARE @IdPag INT = (SELECT IdPago FROM Sales.Pago WHERE IdVenta = @NroVenta);
 
 		EXEC Sales.UpdateEstadoPago @IdPago = @IdPag, @Estado = @EstadoPago;
 
@@ -944,14 +938,14 @@ BEGIN
 		DECLARE @NroFact INT = (SELECT f.NroFact
 								FROM Sales.Factura f
 									INNER JOIN Sales.Venta v ON v.IdVenta = f.IdVent
-								WHERE v.NroVenta = @NroVenta);
+								WHERE v.IdVenta = @NroVenta);
 		
 		EXEC Sales.DeleteFactura @NroFactura = @NroFact;
 	END
 	ELSE
 	BEGIN
 		EXEC ddbba.InsertReg @Mod = 'U', @Txt = 'ERROR EN ACTUALIZAR ESTADO DE REGISTRO EN TABLA VENTA';
-		RAISERROR('NRO VENTA INVï¿½LIDO %d', 16, 1, @NroVenta);
+		RAISERROR('NRO VENTA INVÁLIDO %d', 16, 1, @NroVenta);
 	END
 END
 GO
@@ -965,30 +959,30 @@ CREATE OR ALTER PROCEDURE Sales.InsertDetVenta
 	@IdProd INT
 AS
 BEGIN
-	IF EXISTS (SELECT 1 FROM Sales.Venta WHERE NroVenta = @NroVenta)
+	IF EXISTS (SELECT 1 FROM Sales.Venta WHERE IdVenta = @NroVenta)
 		AND EXISTS (SELECT 1 FROM Production.Producto WHERE IdProd = @IdProd)
 	BEGIN
-		DECLARE @IdVenta INT = (SELECT IdVenta FROM Sales.Venta WHERE NroVenta = @NroVenta)
+		DECLARE @IdVenta INT = (SELECT IdVenta FROM Sales.Venta WHERE IdVenta = @NroVenta)
 
 		INSERT INTO Sales.DetalleVenta (Cantidad, Subtotal, IdVenta, IdProd)
 		VALUES (@CantCompra, @Subtotal, @IdVenta, @IdProd)
 
 		EXEC ddbba.InsertReg @Mod = 'I', @Txt = 'INGRESAR REGISTRO EN TABLA DETALLE VENTA' 
 
-		--ACTUALIZACIï¿½N EN TABLA PRODUCTO--
+		--ACTUALIZACIÓN EN TABLA PRODUCTO--
 		UPDATE Production.Producto
 		SET CantVendida = CantVendida + @CantCompra
 		WHERE IdProd = @IdProd
 
 		DECLARE @CADENA VARCHAR(MAX)
-		SET @CADENA = (SELECT N'ACTUALIZACIï¿½N DE CANTIDAD DE PRODUCTO ' + CAST(IdProd AS VARCHAR(10)) FROM Production.Producto WHERE IdProd = @IdProd)
+		SET @CADENA = (SELECT N'ACTUALIZACIÓN DE CANTIDAD DE PRODUCTO ' + CAST(IdProd AS VARCHAR(10)) FROM Production.Producto WHERE IdProd = @IdProd)
 
 		EXEC ddbba.InsertReg @Mod='U', @Txt = @CADENA
 	END
 	ELSE
 	BEGIN
 		EXEC ddbba.InsertReg @Mod = 'I', @Txt = 'ERROR EN INGRESAR REGISTRO EN TABLA DETALLE VENTA';
-		RAISERROR('NRO VENTA INVï¿½LIDO %d', 16, 1, @NroVenta);
+		RAISERROR('NRO VENTA INVÁLIDO %d', 16, 1, @NroVenta);
 	END
 END
 GO
@@ -1028,18 +1022,18 @@ BEGIN
 		SET Estado = 'CANCELADA', FechaEstado = GETDATE()
 		WHERE IdVenta = @IdVent;
 
-		EXEC ddbba.InsertReg @Mod = 'I', @Txt = 'INSERTAR REGISTRO DE TABLA NOTA DE CRï¿½DITO';
+		EXEC ddbba.InsertReg @Mod = 'I', @Txt = 'INSERTAR REGISTRO DE TABLA NOTA DE CRÉDITO';
     END
     ELSE
     BEGIN
-		EXEC ddbba.InsertReg @Mod = 'I', @Txt = 'ERROR EN INSERTAR REGISTRO DE TABLA NOTA DE CRï¿½DITO';
+		EXEC ddbba.InsertReg @Mod = 'I', @Txt = 'ERROR EN INSERTAR REGISTRO DE TABLA NOTA DE CRÉDITO';
         RAISERROR('EL MONTO DE LA NC EXCEDE EL MONTO DE FACTURA.', 16, 1);
     END
 END;
 GO
 
 
-CREATE OR ALTER PROCEDURE Sales.DeleteNotaCredito	--BORRADO Lï¿½GICO
+CREATE OR ALTER PROCEDURE Sales.DeleteNotaCredito	--BORRADO LÓGICO
 	@IdNotaCredito INT
 AS
 BEGIN
@@ -1049,17 +1043,17 @@ BEGIN
 		SET Baja = GETDATE()
 		WHERE IdNotaCredito = @IdNotaCredito;
 
-		EXEC ddbba.InsertReg @Mod = 'D', @Txt = 'ELIMINAR REGISTRO DE TABLA NOTA DE CRï¿½DITO';
+		EXEC ddbba.InsertReg @Mod = 'D', @Txt = 'ELIMINAR REGISTRO DE TABLA NOTA DE CRÉDITO';
 	END
 	ELSE
 	BEGIN
-		EXEC ddbba.InsertReg @Mod = 'D', @Txt = 'ERROR EN BORRAR REGISTRO DE TABLA NOTA DE CRï¿½DITO';
+		EXEC ddbba.InsertReg @Mod = 'D', @Txt = 'ERROR EN BORRAR REGISTRO DE TABLA NOTA DE CRÉDITO';
         RAISERROR('EL MONTO DE LA NC EXCEDE EL MONTO DE FACTURA.', 16, 1);
 	END
 END
 
 -------------------------------------------------------
------------------ CREACIï¿½N DE INDICES -----------------
+----------------- CREACIÓN DE INDICES -----------------
 -------------------------------------------------------
 -- AYUDA A LOS UPDATE Y CONSULTAS DE LOS SP
 
@@ -1090,7 +1084,7 @@ GO
 
 
 -------------------------------------------------------
----------------- CREACIï¿½N DE FUCIONES -----------------
+---------------- CREACIÓN DE FUCIONES -----------------
 -------------------------------------------------------
 ----------- UTILIZADAS EN LAS IMPOTACIONES ------------
 
@@ -1102,7 +1096,7 @@ RETURNS @TablaDiv TABLE (
 AS
 BEGIN
 	DECLARE @actPos INT = 1,
-			@parte NVARCHAR(MAX) = '',--INICIALIZO LA PARTE EN VACï¿½O
+			@parte NVARCHAR(MAX) = '',--INICIALIZO LA PARTE EN VACÍO
 			@Comillas BIT = 0,
 			@NumParte INT = 1;
 
@@ -1142,7 +1136,7 @@ BEGIN
 			SET @actPos = @actPos + 1;
 	END
 
-		-- INSERTA EL REGISTRO QUE QUEDA AL FINAL (FECHA INGRESO) YA QUE NO LLEGA AL SEPARADOR PARA INSERTAR EN LA CONDICIï¿½N
+		-- INSERTA EL REGISTRO QUE QUEDA AL FINAL (FECHA INGRESO) YA QUE NO LLEGA AL SEPARADOR PARA INSERTAR EN LA CONDICIÓN
 	IF LEN(@parte) > 0 OR @actualLetra = @separador
 		INSERT INTO @TablaDiv (Parte, NumParte) VALUES (LTRIM(RTRIM(@parte)), @NumParte);
 	RETURN;
@@ -1158,7 +1152,7 @@ CREATE OR ALTER FUNCTION ddbba.ParseExcelReg(@Cadena NVARCHAR(MAX))
 AS
 BEGIN
 	DECLARE @actPos INT = 1,
-            @parte NVARCHAR(MAX) = '',	--INICIALIZO LA PARTE EN VACï¿½O
+            @parte NVARCHAR(MAX) = '',	--INICIALIZO LA PARTE EN VACÍO
             @NumParte INT = 1;
 	
 	WHILE @actPos <= LEN(@Cadena)
@@ -1215,7 +1209,7 @@ BEGIN
     END
     ELSE
     BEGIN
-        -- SI LA PRIMERA PARTE NO ES Nï¿½MERICA O Sï¿½ PERO CON UNIDAD DE PESO AL LADO, SIGNIFICA QUE LA CADENA ES UNA REFERENCIA SIN CANTIDAD
+        -- SI LA PRIMERA PARTE NO ES NÚMERICA O SÍ PERO CON UNIDAD DE PESO AL LADO, SIGNIFICA QUE LA CADENA ES UNA REFERENCIA SIN CANTIDAD
         SET @Cantidad = 1
         SET @Referencia = @Cadena 
     END
@@ -1250,5 +1244,108 @@ BEGIN
     ))) AS PROVINCIA_RESULTANTE;
 
 	RETURN;
+END
+GO
+
+
+CREATE OR ALTER FUNCTION ddbba.NormalizarNroPago(@Nro VARCHAR(MAX))
+RETURNS CHAR(22)
+AS
+BEGIN
+	DECLARE @NroPagoNormalizado CHAR(22) = '';
+	DECLARE @CharActual CHAR(1);
+	DECLARE @PosActual INT = 1;
+
+	WHILE(@PosActual <= LEN(@Nro))
+	BEGIN
+		SET @CharActual = SUBSTRING(REVERSE(@Nro), @PosActual, 1);
+
+		IF PATINDEX('%[^0-9A-Za-z]%', @CharActual) = 0
+        BEGIN
+            SET @NroPagoNormalizado = @CharActual + @NroPagoNormalizado;
+        END
+		ELSE
+		BEGIN
+			IF @CharActual = '-'
+			BEGIN
+				SET @NroPagoNormalizado = @CharActual + @NroPagoNormalizado;
+			END
+		END
+
+		SET @PosActual = @PosActual + 1;
+	END
+
+	RETURN @NroPagoNormalizado;
+END
+GO
+
+----- PARA USO DE ENTORNO DE PRUEBAS -----
+
+IF OBJECT_ID('Person.NomYAp', 'U') IS NULL
+BEGIN
+	CREATE TABLE Person.NomYAp
+	(
+		ID INT IDENTITY(1,1) PRIMARY KEY,
+		Nombre VARCHAR(30),
+		Apellido VARCHAR(30)
+	);
+END
+GO
+
+INSERT INTO Person.NomYAp
+VALUES('Mateo', 'González'),
+('Sofía', 'Rodríguez'),
+('Santiago', 'Pérez'),
+('Camila', 'Fernández'),
+('Martín', 'López'),
+('Valentina', 'Gómez'),
+('Lucas', 'Martínez'),
+('Catalina', 'Díaz'),
+('Joaquín', 'Sánchez'),
+('Lucía', 'Torres'),
+('Benjamín', 'Ramírez'),
+('Emilia', 'Flores'),
+('Tomás', 'Romero'),
+('Julieta', 'Acosta'),
+('Facundo', 'Álvarez'),
+('Mía', 'Herrera'),
+('Ignacio', 'Aguirre'),
+('Lola', 'Pereyra'),
+('Francisco', 'Castro')
+GO
+
+CREATE OR ALTER PROCEDURE Person.ClienteRandom
+	@cantidad INT
+AS
+BEGIN
+	DECLARE @i INT = 0;
+
+	WHILE(@i < @cantidad)
+	BEGIN
+		INSERT INTO Person.Cliente(DNI, Nombre, Apellido, IdTipoCli, Genero)
+		SELECT
+			(SELECT ABS(CHECKSUM(NEWID())) % 99999999 + 1000000) AS DNI,
+			
+			(SELECT TOP 1 n1.nombre + ' ' + n2.nombre
+			FROM Person.NomYAp n1, Person.NomYAp n2
+			WHERE n1.nombre != n2.nombre
+			ORDER BY NEWID()) AS nombre,
+		
+			(SELECT TOP 1 ap.apellido
+			FROM Person.NomYAp ap
+			ORDER BY NEWID()) AS apellido,
+
+			(SELECT TOP 1 tp.IdTipoCli
+			FROM Person.TipoCliente tp
+			ORDER BY NEWID()) AS TipoCli,
+
+			(SELECT 
+			CASE 
+				WHEN ABS(CHECKSUM(NEWID())) % 2 = 0 THEN 'Male'
+				ELSE 'Female'
+			END) AS Genero
+
+		SET @i = @i+1
+	END
 END
 GO

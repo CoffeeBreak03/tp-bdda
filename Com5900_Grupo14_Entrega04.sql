@@ -116,13 +116,28 @@ BEGIN
 	IF NOT EXISTS(SELECT 1 FROM Production.LineaProducto WHERE Descripcion = @DescCategoria)	-- SOLO LO INSERTO LA PRIMERA VEZ
 		EXEC Production.InsertLineaProd @Descripcion = @DescCategoria;
 
-	DECLARE @IdCat INT = (SELECT IdLinProd FROM Production.LineaProducto WHERE Descripcion = @DescCategoria);
-
-	EXEC('INSERT INTO Production.Producto (IdLinProd, CantIngresada, CantVendida, Descripcion, Proveedor, PrecioUnit, RefPrecio, RefPeso, FechaIng)
-    SELECT @IdCat, 1, 0, ''Product'', ''No especificado'', ''Precio Unitario en Dolares'', 0, 0, GETDATE()
-    FROM OPENROWSET(''Microsoft.ACE.OLEDB.16.0'', 
+	CREATE TABLE #TempElectro
+	(
+		ID INT IDENTITY(1,1) PRIMARY KEY,
+		Descripcion VARCHAR(90),
+		Precio DECIMAL(7,2)
+	);
+	
+	EXEC('INSERT INTO #TempElectro (Descripcion, Precio)
+	SELECT [Product], [Precio Unitario en Dolares]
+	FROM OPENROWSET(''Microsoft.ACE.OLEDB.16.0'', 
                      ''Excel 12.0;Database=' + @NomArch + ';HDR=YES;'', 
                      ''SELECT * FROM [Sheet1$]'')');
+
+	DECLARE @IdCat INT;
+	SET @IdCat = (SELECT IdLinProd FROM Production.LineaProducto WHERE Descripcion = @DescCategoria);
+
+	INSERT INTO Production.Producto (IdLinProd, CantIngresada, CantVendida, Descripcion, Proveedor, PrecioUnit, RefPrecio, RefPeso, FechaIng)
+    SELECT @IdCat, 1, 0, t.Descripcion, 'No especificado', t.Precio, 0, 0, GETDATE()
+	FROM #TempElectro t
+	WHERE NOT EXISTS (SELECT 1 FROM Production.Producto p WHERE p.Descripcion = t.Descripcion COLLATE Latin1_General_CI_AS);
+    
+	DROP TABLE #TempElectro;
 
 	EXEC ddbba.InsertReg @Mod='I', @Txt = 'IMPOTAR PRODUCTOS DE ELECTRONI ASCCESSORIES.XLSX';
 END
@@ -159,7 +174,7 @@ BEGIN
 			tp.ID_TAB_PARS AS ID_DETALLE_PROD,
 			MAX(CASE WHEN tp.NumParte = 1 THEN tp.Parte END) AS DESCRIPCION,
 			MAX(CASE WHEN tp.NumParte = 2 THEN tp.Parte END) AS PROVEEDOR,
-			MAX(CASE WHEN tp.NumParte = 3 THEN tp.Parte END) AS NOM_PRODUCTO,
+			MAX(CASE WHEN tp.NumParte = 3 THEN tp.Parte END) AS CATEGORIA,
 			MAX(CASE WHEN tp.NumParte = 4 THEN tp.Parte END) AS CANTIDAD_TEMPORAL,
 			MAX(CASE WHEN tp.NumParte = 5 THEN TRY_CAST(tp.Parte AS NUMERIC(7,2)) END) AS PRECIO
 		FROM TabParseada tp
@@ -175,10 +190,11 @@ BEGIN
 		GROUP BY dp.ID_DETALLE_PROD
 	)
 	INSERT INTO Production.Producto (IdLinProd, NomProd, CantIngresada, CantVendida, Descripcion, Proveedor, PrecioUnit, RefPrecio, RefPeso, FechaIng)
-	SELECT lp.IdLinProd, dp.NOM_PRODUCTO, tc.CANTIDAD, 0, dp.DESCRIPCION, dp.PROVEEDOR, dp.PRECIO, 0, tc.REF_PESO, GETDATE()
+	SELECT lp.IdLinProd, dp.CATEGORIA, tc.CANTIDAD, 0, dp.DESCRIPCION, dp.PROVEEDOR, dp.PRECIO, 0, tc.REF_PESO, GETDATE()
 	FROM DetalleProd dp
 		INNER JOIN TabCantRef tc ON dp.ID_DETALLE_PROD = tc.ID_TAB_CANT_REF
-		INNER JOIN Production.LineaProducto lp ON lp.Prod = NOM_PRODUCTO;
+		INNER JOIN Production.LineaProducto lp ON lp.Descripcion = CATEGORIA COLLATE Latin1_General_CI_AS
+	WHERE NOT EXISTS (SELECT 1 FROM Production.Producto pp WHERE pp.Descripcion = dp.DESCRIPCION COLLATE Latin1_General_CI_AS);
 
 	DROP TABLE #TempProdImport;
 	EXEC ddbba.InsertReg @Mod='I', @Txt = 'IMPOTAR PRODUCTOS DE PRODUCTOS IMPORTADOS.XLSX';
@@ -199,7 +215,7 @@ BEGIN
 	);
 
 	EXEC('INSERT INTO #TempInfoCompImport(TEXTO)
-		SELECT CIUDAD + ''|'' + ''REEMPLAZAR POR'' + ''|'' + DIRECCION + ''|'' + HORARIO + ''|'' + TRY_CAST(TELEFONO AS VARCHAR(10))
+		SELECT CIUDAD + ''|'' + [REEMPLAZAR POR] + ''|'' + DIRECCION + ''|'' + HORARIO + ''|'' + TRY_CAST(TELEFONO AS CHAR(10))
 		FROM OPENROWSET(''Microsoft.ACE.OLEDB.16.0'', 
 						 ''Excel 12.0;Database=' + @NomArch + ''', 
 						 ''SELECT * FROM [sucursal$]'')');
@@ -228,7 +244,8 @@ BEGIN
 	INSERT INTO Production.Sucursal(CiudadOrig, Localidad, Direccion, Provincia, Horario, Telefono)
 	SELECT ds.CIUDAD, ds.CIUDAD_REMPLAZAR, dd.DIRECCION, dd.PROVINCIA, ds.HORARIO, ds.TELEFONO
 	FROM DetalleSuc ds
-		INNER JOIN DetalleDir dd ON ds.ID = dd.ID;
+		INNER JOIN DetalleDir dd ON ds.ID = dd.ID
+	WHERE NOT EXISTS(SELECT 1 FROM Production.Sucursal WHERE Direccion = dd.DIRECCION);
 
 
 	DELETE FROM #TempInfoCompImport;
@@ -274,7 +291,8 @@ BEGIN
 			END
 	FROM DetalleEmp de
 		INNER JOIN DetalleDir dd ON de.ID = dd.ID
-		INNER JOIN Production.Sucursal s ON s.Localidad = de.SUCURSAL;
+		INNER JOIN Production.Sucursal s ON s.Localidad = de.SUCURSAL
+	WHERE NOT EXISTS(SELECT 1 FROM Person.Empleado pe WHERE pe.Legajo = de.LEGAJO);
 
 
 	DROP TABLE #TempInfoCompImport;
@@ -283,14 +301,16 @@ BEGIN
 		SELECT F2, F3
 		FROM OPENROWSET(''Microsoft.ACE.OLEDB.16.0'', 
 						 ''Excel 12.0;Database=' + @NomArch + ''', 
-						 ''SELECT * FROM [medios de pago$]'')');
+						 ''SELECT * FROM [medios de pago$]'')
+		WHERE NOT EXISTS(SELECT 1 FROM Sales.Mediopago WHERE MedPagoAReemp = F2 COLLATE Latin1_General_CI_AS AND Descripcion = F3 COLLATE Latin1_General_CI_AS)');
 
 
-	EXEC('INSERT INTO Production.LineaProducto (Descripcion, Prod)
-		SELECT [LÍNEA DE PRODUCTO], PRODUCTO
+	EXEC('INSERT INTO Production.LineaProducto (Descripcion)
+		SELECT DISTINCT([LÍNEA DE PRODUCTO])
 		FROM OPENROWSET(''Microsoft.ACE.OLEDB.16.0'', 
 						 ''Excel 12.0;Database=' + @NomArch + ''', 
-						 ''SELECT * FROM [Clasificacion productos$]'')');
+						 ''SELECT * FROM [Clasificacion productos$]'')
+		WHERE NOT EXISTS(SELECT 1 FROM Production.LineaProducto WHERE Descripcion = [LÍNEA DE PRODUCTO] COLLATE Latin1_General_CI_AS)');
 
 	EXEC ddbba.InsertReg @Mod='I', @Txt = 'IMPOTAR PRODUCTOS DE INFORMACION_COMPLEMENTARIA.XLSX'
 END
@@ -372,38 +392,43 @@ BEGIN
 	INSERT INTO Person.TipoCliente(Descripcion)
 	SELECT DISTINCT (TipoClien)
 	FROM @TabPartesPorVenta
-	WHERE NOT EXISTS(SELECT 1 FROM Person.TipoCliente WHERE Descripcion = TipoClien)
+	WHERE NOT EXISTS(SELECT 1 FROM Person.TipoCliente WHERE Descripcion = TipoClien);
+
+	EXEC Person.ClienteRandom 14;
 
 	INSERT INTO Sales.TipoFactura(TipoFac)
 	SELECT DISTINCT(TipoFact)
 	FROM @TabPartesPorVenta
 	WHERE NOT EXISTS(SELECT 1 FROM Sales.TipoFactura WHERE TipoFac = TipoFact);
 
-	INSERT INTO Sales.Pago(NroPago, Monto, IdMedPago)
-	SELECT v.IdPago, Cant*PrecUni, mp.IdMedPago
-	FROM @TabPartesPorVenta v 
-		INNER JOIN Sales.Mediopago mp ON v.MedPago = mp.MedPagoAReemp
-	WHERE NOT EXISTS(SELECT 1 FROM Sales.Pago WHERE NroPago = v.IdPago)
-
-	INSERT INTO Sales.Venta(Fecha, Hora, IdSuc, IdEmp, IdPag, IdCli)
-	SELECT v.Fecha, v.Hora, ts.IdSuc, te.IdEmp, tp.IdPago, c.IdCli
+	INSERT INTO Sales.Venta(Fecha, Hora, IdSuc, IdEmp, IdCli)
+	SELECT v.Fecha, v.Hora, ts.IdSuc, te.IdEmp, c1.IdCli
 	FROM @TabPartesPorVenta v
 		INNER JOIN Production.Sucursal ts ON v.Ciudad = ts.CiudadOrig
 		INNER JOIN Person.Empleado te ON v.Empl = te.Legajo
-		INNER JOIN Sales.Pago tp ON v.IdPago = tp.NroPago
 		INNER JOIN Person.TipoCliente tc ON tc.Descripcion = v.TipoClien
-		INNER JOIN Person.Cliente c ON c.IdTipoCli = tc.IdTipoCli
-	WHERE NOT EXISTS(SELECT 1 FROM Sales.Venta WHERE NroVenta = v.IdPago)
+		INNER JOIN Person.Cliente c1 ON c1.IdCli = (SELECT TOP 1 c2.IdCli
+														FROM Person.Cliente c2
+														WHERE c2.IdTipoCli = tc.IdTipoCli
+														ORDER BY NEWID())
+
+	UPDATE @TabPartesPorVenta
+	SET IdPago = ddbba.NormalizarNroPago(IdPago)
+
+	INSERT INTO Sales.Pago(NroPago, Monto, IdMedPago, IdVenta)
+	SELECT v.IdPago AS NroPago, (v.Cant * v.PrecUni) AS Monto, mp.IdMedPago, v.ID
+	FROM @TabPartesPorVenta v 
+		INNER JOIN Sales.Mediopago mp ON mp.MedPagoAReemp = v.MedPago
+	WHERE NOT EXISTS(SELECT 1 FROM Sales.Pago WHERE NroPago = v.IdPago) OR v.IdPago = '--' 
 	
 	INSERT INTO Sales.Factura(NroFact, IdTipoFac, FechaEmision, Total, IdVent)
-	SELECT IdFact, tf.IdTipoFac, v.Fecha, Cant*PrecUni, tv.IdVenta
+	SELECT TRY_CAST(v.IdFact AS CHAR(12)), tf.IdTipoFac, v.Fecha, (Cant * PrecUni), v.ID
 	FROM @TabPartesPorVenta v 
 		INNER JOIN Sales.TipoFactura tf ON v.TipoFact = tf.TipoFac 
-		INNER JOIN Sales.Venta tv ON v.ID = tv.IdVenta
-	WHERE NOT EXISTS(SELECT 1 FROM Sales.Factura WHERE NroFact = IdFact)
+	WHERE NOT EXISTS(SELECT 1 FROM Sales.Factura f WHERE f.NroFact = v.IdFact)
 
 	INSERT INTO Sales.DetalleVenta(Cantidad, Subtotal, IdVenta, IdProd)
-	SELECT Cant, Cant*PrecUni, tv.IdVenta, tp.IdProd
+	SELECT Cant, (Cant * PrecUni), v.ID, tp.IdProd
 	FROM @TabPartesPorVenta v JOIN Production.Producto tp ON v.Prod = tp.Descripcion
 		JOIN Sales.Venta tv ON v.ID = tv.IdVenta 
 
@@ -415,3 +440,12 @@ BEGIN
 	EXEC ddbba.InsertReg @Mod='I', @Txt = 'IMPORTAR PRODUCTOS DE VENTAS_REGISTRADAS.CSV'
 END
 GO
+
+--EXEC Production.ImportInfoComp 'E:\UNIVERSIDAD\BBDDAplicada\TP final\TP_integrador_Archivos\Informacion_complementaria.xlsx'
+--EXEC Production.ImportCatalogo 'E:\UNIVERSIDAD\BBDDAplicada\TP final\TP_integrador_Archivos\Productos\catalogo.csv', 'E:\UNIVERSIDAD\BBDDAplicada\TP final\TP_integrador_Archivos\Informacion_complementaria.xlsx'
+--EXEC Production.ImportElectrodomesticos 'E:\UNIVERSIDAD\BBDDAplicada\TP final\TP_integrador_Archivos\Productos\Electronic accessories.xlsx'
+--EXEC Production.ImportProductosImportados 'E:\UNIVERSIDAD\BBDDAplicada\TP final\TP_integrador_Archivos\Productos\Productos_importados.xlsx'
+--EXEC Production.ImportVentas 'E:\UNIVERSIDAD\BBDDAplicada\TP final\TP_integrador_Archivos\Ventas_registradas.csv'
+
+
+
