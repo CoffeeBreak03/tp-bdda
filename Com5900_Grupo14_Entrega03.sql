@@ -219,14 +219,14 @@ BEGIN
 	(
 		IdPago INT IDENTITY(1,1) PRIMARY KEY,
 		NroPago CHAR(22),	--0000003100099475144530
-		IdVenta INT NOT NULL,
+		IdFactura INT NOT NULL,
 		IdMedPago INT NOT NULL,
 		Monto NUMERIC(7,2) NOT NULL,
 		Estado CHAR(10) DEFAULT 'ACREDITADO',
 		FechaEstado DATE DEFAULT GETDATE(),
 	
-		CONSTRAINT FK_Vent FOREIGN KEY (IdVenta)
-			REFERENCES Sales.Venta(IdVenta),
+		CONSTRAINT FK_Factura FOREIGN KEY (IdFactura)
+			REFERENCES Sales.Factura(IdFact),
 		CONSTRAINT FK_MedPag FOREIGN KEY (IdMedPago)
 			REFERENCES Sales.Mediopago(IdMedPago),
 		CONSTRAINT CK_EstadoPago CHECK (Estado IN ('ACREDITADO', 'ANULADO'))
@@ -255,12 +255,14 @@ BEGIN
 		FechaEmision DATE NOT NULL,
 		Total NUMERIC(7,2),
 		IdVent INT NOT NULL,
-		Baja DATE DEFAULT NULL,
+		Estado CHAR(9) DEFAULT 'NO PAGADA',
+		FechaEstado DATE DEFAULT NULL,
 
 		CONSTRAINT FK_TipoF FOREIGN KEY (IdTipoFac)
 			REFERENCES Sales.TipoFactura (IdTipoFac),
 		CONSTRAINT FK_VentFac FOREIGN KEY (IdVent)
-			REFERENCES Sales.Venta (IdVenta)
+			REFERENCES Sales.Venta (IdVenta),
+		CONSTRAINT CK_EstadoFact CHECK (Estado IN ('PAGADA', 'NO PAGADA', 'CANCELADA'))
 	);
 END
 
@@ -273,8 +275,7 @@ BEGIN
 		IdProdNuevo INT,
 		Monto DECIMAL(18, 2) NOT NULL,
 		FechaEmision DATE NOT NULL,
-		Motivo VARCHAR(255),
-		Baja DATE DEFAULT NULL,
+		Motivo VARCHAR(255)
 
 		CONSTRAINT FK_IdFact FOREIGN KEY (IdFac) 
 			REFERENCES Sales.Factura(IdFact)
@@ -768,22 +769,32 @@ BEGIN
 END
 GO
 
-CREATE OR ALTER PROCEDURE Sales.DeleteFactura	--BORRADO LÓGICO
-	@NroFactura INT
+
+CREATE OR ALTER PROCEDURE Sales.CambiarEstadoFacturaPagada
+	@NroFactura INT,
+	@IdPago INT
 AS
 BEGIN
-	IF EXISTS(SELECT 1 FROM Sales.Factura WHERE NroFact = @NroFactura)
+	IF EXISTS(SELECT 1 FROM Sales.Pago WHERE IdPago = @IdPago AND Estado = 'ACREDITADO')
 	BEGIN
-		UPDATE Sales.Factura
-		SET Baja = GETDATE()
-		WHERE NroFact = @NroFactura
+		IF EXISTS(SELECT 1 FROM Sales.Factura WHERE NroFact = @NroFactura)
+		BEGIN
+			UPDATE Sales.Factura
+			SET Estado = 'PAGADA', FechaEstado = GETDATE()
+			WHERE NroFact = @NroFactura
 
-		EXEC ddbba.InsertReg @Mod='D', @Txt = 'BORRADO LOGICO DE REGISTRO EN TABLA FACTURA';
+			EXEC ddbba.InsertReg @Mod='D', @Txt = 'CAMBIO DE ESTADO EN TABLA FACTURA';
+		END
+		ELSE
+		BEGIN
+			EXEC ddbba.InsertReg @Mod='D', @Txt = 'ERROR EN CAMBIAR ESTADO EN TABLA TIPO FACTURA / NRO DE FACTURA ERRONEO'
+			RAISERROR('NUMERO DE FACTURA INVALIDO %d', 16, 1, @NroFactura);
+		END
 	END
 	ELSE
 	BEGIN
-		EXEC ddbba.InsertReg @Mod='D', @Txt = 'ERROR EN BORRAR REGISTRO EN TABLA TIPO FACTURA / NRO DE FACTURA ERRONEO'
-		RAISERROR('NUMERO DE FACTURA INVALIDO %d', 16, 1, @NroFactura);
+		EXEC ddbba.InsertReg @Mod='D', @Txt = 'ERROR EN CAMBIAR ESTADO EN TABLA TIPO FACTURA / NRO DE FACTURA ERRONEO'
+		RAISERROR('NUMERO DE PAGO INVALIDO %d', 16, 1, @IdPago);
 	END
 END
 GO
@@ -835,31 +846,59 @@ GO
 ---PARA TABLA PAGO---
 CREATE OR ALTER PROCEDURE Sales.InsertPago
 	@NroPago VARCHAR(22),
-	@IdVenta INT, 
+	@IdFact INT, 
 	@Monto NUMERIC(7,2),
 	@MedPago INT
 AS
 BEGIN
-	IF EXISTS (SELECT 1 FROM Sales.Mediopago WHERE IdMedPago = @MedPago)
-	AND EXISTS (SELECT 1 FROM Sales.Venta WHERE IdVenta = @IdVenta)
+	IF(@NroPago <> '--')
 	BEGIN
-		IF NOT EXISTS(SELECT 1 FROM Sales.Pago WHERE NroPago = @NroPago)
+		IF EXISTS (SELECT 1 FROM Sales.Mediopago WHERE IdMedPago = @MedPago)
+		AND NOT EXISTS(SELECT 1 FROM Sales.Pago WHERE NroPago = @NroPago)	--PAGO ELECTR�NICO
+		AND EXISTS (SELECT 1 FROM Sales.Factura WHERE IdFact = @IdFact AND Estado = 'NO PAGADA')
 		BEGIN
-			INSERT INTO Sales.Pago (NroPago, Monto, IdMedPago, IdVenta)
-			VALUES (@NroPago, @Monto, @MedPago, @IdVenta);
+			IF NOT EXISTS(SELECT 1 FROM Sales.Pago WHERE NroPago = @NroPago)
+			BEGIN
+				INSERT INTO Sales.Pago (NroPago, Monto, IdMedPago, IdFactura)
+				VALUES (@NroPago, @Monto, @MedPago, @IdFact);
 
-			EXEC ddbba.InsertReg @Mod='I', @Txt = 'INSERTAR REGISTRO EN TABLA PAGO';
+				EXEC ddbba.InsertReg @Mod='I', @Txt = 'INSERTAR REGISTRO EN TABLA PAGO';
+			END
+			ELSE
+			BEGIN
+				EXEC ddbba.InsertReg @Mod='I', @Txt = 'ERROR PARA INSERTAR REGISTRO EN TABLA PAGO';
+				RAISERROR('PAGO EXISTENTE %d', 16, 1, @NroPago);
+			END
 		END
 		ELSE
 		BEGIN
 			EXEC ddbba.InsertReg @Mod='I', @Txt = 'ERROR PARA INSERTAR REGISTRO EN TABLA PAGO';
-			RAISERROR('PAGO EXISTENTE %d', 16, 1, @NroPago);
+			RAISERROR('ID DE PAGO INV�LIDO %d', 16, 1, @MedPago);
 		END
 	END
 	ELSE
 	BEGIN
-		EXEC ddbba.InsertReg @Mod='I', @Txt = 'ERROR PARA INSERTAR REGISTRO EN TABLA PAGO';
-		RAISERROR('ID DE PAGO INVÁLIDO %d', 16, 1, @MedPago);
+		IF EXISTS (SELECT 1 FROM Sales.Mediopago WHERE IdMedPago = @MedPago)
+		AND EXISTS (SELECT 1 FROM Sales.Factura WHERE IdFact = @IdFact AND Estado = 'NO PAGADA')
+		BEGIN
+			IF NOT EXISTS(SELECT 1 FROM Sales.Pago WHERE NroPago = @NroPago)
+			BEGIN
+				INSERT INTO Sales.Pago (NroPago, Monto, IdMedPago, IdFactura)
+				VALUES (@NroPago, @Monto, @MedPago, @IdFact);
+
+				EXEC ddbba.InsertReg @Mod='I', @Txt = 'INSERTAR REGISTRO EN TABLA PAGO';
+			END
+			ELSE
+			BEGIN
+				EXEC ddbba.InsertReg @Mod='I', @Txt = 'ERROR PARA INSERTAR REGISTRO EN TABLA PAGO';
+				RAISERROR('PAGO EXISTENTE %d', 16, 1, @NroPago);
+			END
+		END
+		ELSE
+		BEGIN
+			EXEC ddbba.InsertReg @Mod='I', @Txt = 'ERROR PARA INSERTAR REGISTRO EN TABLA PAGO';
+			RAISERROR('ID DE PAGO INV�LIDO %d', 16, 1, @MedPago);
+      END
 	END
 END
 GO
@@ -989,12 +1028,12 @@ GO
 --- TABLA NOTA DE CREDITO ---
 CREATE OR ALTER PROCEDURE Sales.InsertNotaCredito
     @NroFact INT,
-	@Producto VARCHAR(40),
+	@Producto VARCHAR(90),
     @Monto DECIMAL(18, 2),
 	@Motivo VARCHAR(255)
 AS
 BEGIN
-    IF EXISTS(SELECT 1 FROM Sales.Factura WHERE NroFact = @NroFact AND Total >= @Monto)
+    IF EXISTS(SELECT 1 FROM Sales.Factura WHERE NroFact = @NroFact AND Estado = 'PAGADA' AND Total >= @Monto)
     BEGIN
 		DECLARE @IdProd INT;
 
@@ -1002,7 +1041,7 @@ BEGIN
 			SET @IdProd = NULL;
 		ELSE
 		BEGIN
-			SET @IdProd = (SELECT IdProd FROM Production.Producto WHERE NomProd = @Producto);
+			SET @IdProd = (SELECT IdProd FROM Production.Producto WHERE Descripcion = @Producto);
 			SET @Monto = (SELECT PrecioUnit FROM Production.Producto WHERE IdProd = @IdProd);
 		END
 		
@@ -1012,44 +1051,34 @@ BEGIN
 		INSERT INTO Sales.NotaCredito(IdFac, IdProdNuevo, Monto, FechaEmision, Motivo)
         VALUES (@IdFact, @IdProd, @Monto, GETDATE(), @Motivo);
 
-        -- ACTUALIZAR FACTURA
-        UPDATE Sales.Factura
-        SET Baja = GETDATE()
-        WHERE IdFact = @IdFact;
+    -- ACTUALIZAR FACTURA
+    UPDATE Sales.Factura
+    SET Estado = 'CANCELADA', FechaEstado = GETDATE()
+    WHERE IdFact = @IdFact;
 
+		-- ACTUALIZAR VENTA
 		UPDATE Sales.Venta
 		SET Estado = 'CANCELADA', FechaEstado = GETDATE()
 		WHERE IdVenta = @IdVent;
 
-		EXEC ddbba.InsertReg @Mod = 'I', @Txt = 'INSERTAR REGISTRO DE TABLA NOTA DE CRÉDITO';
-    END
-    ELSE
-    BEGIN
-		EXEC ddbba.InsertReg @Mod = 'I', @Txt = 'ERROR EN INSERTAR REGISTRO DE TABLA NOTA DE CRÉDITO';
-        RAISERROR('EL MONTO DE LA NC EXCEDE EL MONTO DE FACTURA.', 16, 1);
-    END
+    -- ACTUALIZAR PRODUCTO SI EXISTE
+		IF @IdProd IS NOT NULL
+		BEGIN
+			DECLARE @PrecioUnit NUMERIC(7,2) = (SELECT PrecioUnit FROM Production.Producto WHERE IdProd = @IdProd);
+			DECLARE @CantidadComprada NUMERIC(3,0) = (@Monto / @PrecioUnit);
+			
+			UPDATE Production.Producto
+			SET CantIngresada = CantIngresada + CAST(@CantidadComprada AS INT), CantVendida = CantVendida - CAST(@CantidadComprada AS INT)
+			WHERE IdProd = @IdProd;
+		END
+  END
+  ELSE
+  BEGIN
+  EXEC ddbba.InsertReg @Mod = 'I', @Txt = 'ERROR EN INSERTAR REGISTRO DE TABLA NOTA DE CRÉDITO';
+      RAISERROR('EL MONTO DE LA NC EXCEDE EL MONTO DE FACTURA.', 16, 1);
+  END
 END;
 GO
-
-
-CREATE OR ALTER PROCEDURE Sales.DeleteNotaCredito	--BORRADO LÓGICO
-	@IdNotaCredito INT
-AS
-BEGIN
-	IF EXISTS(SELECT 1 FROM Sales.NotaCredito WHERE IdNotaCredito = @IdNotaCredito)
-	BEGIN
-		UPDATE Sales.NotaCredito
-		SET Baja = GETDATE()
-		WHERE IdNotaCredito = @IdNotaCredito;
-
-		EXEC ddbba.InsertReg @Mod = 'D', @Txt = 'ELIMINAR REGISTRO DE TABLA NOTA DE CRÉDITO';
-	END
-	ELSE
-	BEGIN
-		EXEC ddbba.InsertReg @Mod = 'D', @Txt = 'ERROR EN BORRAR REGISTRO DE TABLA NOTA DE CRÉDITO';
-        RAISERROR('EL MONTO DE LA NC EXCEDE EL MONTO DE FACTURA.', 16, 1);
-	END
-END
 
 -------------------------------------------------------
 ----------------- CREACIÓN DE INDICES -----------------
@@ -1064,22 +1093,21 @@ CREATE UNIQUE NONCLUSTERED INDEX IX_Empleado_NroEmp_Estado
 ON Person.Empleado (Legajo) INCLUDE (Baja)
 WITH (FILLFACTOR = 80);	-- NO HAY MUCHO CAMBIO EN LA TABLA
 
-CREATE UNIQUE INDEX IDX_Unique_DNI
-ON Person.Cliente (DNI) WHERE DNI IS NOT NULL
-WITH (FILLFACTOR = 70);	--HAY MAYOR CANTIDAD DE CAMBIOS
+CREATE NONCLUSTERED INDEX IX_NroFact
+ON Sales.Factura (NroFact)
+WITH (FILLFACTOR = 80);	-- NO HAY MUCHO CAMBIO EN LA TABLA
 
-CREATE UNIQUE NONCLUSTERED INDEX IX_Factura_NroFact_Estado
-ON Sales.Factura (NroFact) INCLUDE (Baja)
+CREATE NONCLUSTERED INDEX IX_Descripcion_Prod
+ON Production.Producto(Descripcion) INCLUDE (NomProd)
+WITH (FILLFACTOR = 70); --HAY MAYOR CANTIDAD DE CAMBIOS
+
+CREATE UNIQUE INDEX IDX_Unique_DNI	--PARA MANTENER LOS DNI DE LOS CLIENTES UNIQUE
+ON Person.Cliente (DNI) WHERE DNI IS NOT NULL
 WITH (FILLFACTOR = 70);	--HAY MAYOR CANTIDAD DE CAMBIOS
 
 CREATE UNIQUE NONCLUSTERED INDEX IX_Pago_NroPago_Estado
 ON Sales.Pago (NroPago) INCLUDE (Estado, FechaEstado)
 WITH (FILLFACTOR = 70);	--HAY MAYOR CANTIDAD DE CAMBIOS
-
-CREATE UNIQUE NONCLUSTERED INDEX IX_Venta_NroVenta_Estado
-ON Sales.Venta (NroVenta) INCLUDE (Estado, FechaEstado)
-WITH (FILLFACTOR = 70);	--HAY MAYOR CANTIDAD DE CAMBIOS
-GO
 
 
 -------------------------------------------------------
