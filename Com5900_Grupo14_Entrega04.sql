@@ -440,12 +440,110 @@ BEGIN
 	EXEC ddbba.InsertReg @Mod='I', @Txt = 'IMPORTAR PRODUCTOS DE VENTAS_REGISTRADAS.CSV'
 END
 GO
+/*
+EXEC Production.ImportInfoComp 'C:\Users\parof\Documents\Documentos Varios\Universidad\Materias\Bases de datos aplicada\TP\TP_integrador_Archivos\Informacion_complementaria.xlsx'
+EXEC Production.ImportCatalogo 'C:\Users\parof\Documents\Documentos Varios\Universidad\Materias\Bases de datos aplicada\TP\TP_integrador_Archivos\Productos\catalogo.csv', 'C:\Users\parof\Documents\Documentos Varios\Universidad\Materias\Bases de datos aplicada\TP\TP_integrador_Archivos\Informacion_complementaria.xlsx'
+EXEC Production.ImportElectrodomesticos 'C:\Users\parof\Documents\Documentos Varios\Universidad\Materias\Bases de datos aplicada\TP\TP_integrador_Archivos\Productos\Electronic accessories.xlsx'
+EXEC Production.ImportProductosImportados 'C:\Users\parof\Documents\Documentos Varios\Universidad\Materias\Bases de datos aplicada\TP\TP_integrador_Archivos\Productos\Productos_importados.xlsx'
+EXEC Production.ImportVentas 'C:\Users\parof\Documents\Documentos Varios\Universidad\Materias\Bases de datos aplicada\TP\TP_integrador_Archivos\Ventas_registradas.csv'
+GO*/
 
---EXEC Production.ImportInfoComp 'E:\UNIVERSIDAD\BBDDAplicada\TP final\TP_integrador_Archivos\Informacion_complementaria.xlsx'
---EXEC Production.ImportCatalogo 'E:\UNIVERSIDAD\BBDDAplicada\TP final\TP_integrador_Archivos\Productos\catalogo.csv', 'E:\UNIVERSIDAD\BBDDAplicada\TP final\TP_integrador_Archivos\Informacion_complementaria.xlsx'
---EXEC Production.ImportElectrodomesticos 'E:\UNIVERSIDAD\BBDDAplicada\TP final\TP_integrador_Archivos\Productos\Electronic accessories.xlsx'
---EXEC Production.ImportProductosImportados 'E:\UNIVERSIDAD\BBDDAplicada\TP final\TP_integrador_Archivos\Productos\Productos_importados.xlsx'
---EXEC Production.ImportVentas 'E:\UNIVERSIDAD\BBDDAplicada\TP final\TP_integrador_Archivos\Ventas_registradas.csv'
+CREATE OR ALTER PROCEDURE ddbba.TotalFacturadoPorDia(@mes SMALLINT, @año INT)
+AS
+BEGIN
+	WITH VentasPorDiaDeSemana(Dia, Monto) as (
+		SELECT DATENAME(WEEKDAY, v.Fecha), d.Subtotal
+		FROM Sales.Venta v JOIN Sales.DetalleVenta d on v.IdVenta = d.IdVenta
+		WHERE MONTH(v.Fecha) = @mes AND YEAR(v.Fecha) = @año
+	)
 
+	SELECT Dia, SUM(Monto) as Monto FROM VentasPorDiaDeSemana
+	GROUP BY Dia
+	FOR XML raw, elements, root('TotalFacturadoPorDia')
+END
+GO 
 
+CREATE OR ALTER PROCEDURE ddbba.TotalFacturadoPorTurnoPorMes
+AS
+BEGIN
+	SELECT e.Turno ,DATENAME(MONTH, v.Fecha) as Mes, SUM(dv.Subtotal) as Monto
+	FROM Sales.Venta v JOIN Sales.DetalleVenta dv on v.IdVenta = dv.IdVenta
+		JOIN Production.Sucursal s on v.IdSuc = s.IdSuc
+		JOIN Person.Empleado e on s.IdSuc = e.IdSuc
+	GROUP BY e.Turno, DATENAME(MONTH, v.Fecha)
+	ORDER BY e.Turno, Mes
+	FOR XML raw, elements, root('TotalFacturadoPorTurnoPorMes')
+END
+GO
 
+CREATE OR ALTER PROCEDURE ddbba.CantidadProdVendidosEnRangoFecha(@fechaIni date, @fechaFin date)
+AS
+BEGIN
+	SELECT v.Fecha, SUM(dv.Cantidad) as Cantidad
+	FROM Sales.Venta v JOIN Sales.DetalleVenta dv on v.IdVenta = dv.IdVenta
+	WHERE v.Fecha >= @fechaIni AND v.Fecha <= @fechaFin
+	GROUP BY v.Fecha
+	ORDER BY SUM(dv.Cantidad) DESC
+	FOR XML raw, elements, root('CantidadProdVendidosEnRangoFecha')
+END
+GO
+
+CREATE OR ALTER PROCEDURE ddbba.CantidadProdVendidosPorSucursalEnRangoFecha(@fechaIni date, @fechaFin date)
+AS
+BEGIN
+	SELECT v.Fecha, s.Localidad as Sucursal, SUM(dv.Cantidad) as Cantidad
+	FROM Sales.Venta v JOIN Sales.DetalleVenta dv on v.IdVenta = dv.IdVenta
+		JOIN Production.Sucursal s on v.IdSuc = S.IdSuc
+	WHERE v.Fecha >= @fechaIni AND v.Fecha <= @fechaFin
+	GROUP BY v.Fecha, s.Localidad 
+	ORDER BY SUM(dv.Cantidad) DESC
+	FOR XML raw, elements, root('CantidadProdVendidosPorSucursalEnRangoFecha')
+END
+GO
+
+CREATE OR ALTER PROCEDURE ddbba.ProductosMasVendidosEnMes(@mes SMALLINT)
+AS
+BEGIN
+	WITH ProdsVendidosSemana (Semana, Producto, Cantidad) AS (
+		SELECT DATEPART(WEEK, v.Fecha) - DATEPART(WEEK, DATETRUNC(MONTH, v.Fecha)) + 1, p.Descripcion, SUM(dv.Cantidad)
+		FROM Sales.Venta v JOIN Sales.DetalleVenta dv on v.IdVenta = dv.IdVenta
+		JOIN Production.Producto p on dv.IdProd = p.IdProd
+		WHERE MONTH(v.Fecha) = @mes
+		GROUP BY DATEPART(WEEK, v.Fecha) - DATEPART(WEEK, DATETRUNC(MONTH, v.Fecha)) + 1, p.Descripcion
+		)
+
+	SELECT Semana, Producto, Cantidad
+	FROM (SELECT *, ROW_NUMBER() OVER (PARTITION BY Semana ORDER BY Cantidad DESC) as Fila FROM ProdsVendidosSemana) as t
+	WHERE Fila <= 5
+	FOR XML raw, elements, root('ProductosMasVendidosEnMes')
+END
+GO
+
+CREATE OR ALTER PROCEDURE ddbba.ProductosMenosVendidosEnMes(@mes SMALLINT)
+AS
+BEGIN
+	WITH ProdsVendidosMes (Producto, Cantidad) AS (
+		SELECT p.Descripcion, SUM(dv.Cantidad)
+		FROM Sales.Venta v JOIN Sales.DetalleVenta dv on v.IdVenta = dv.IdVenta
+		JOIN Production.Producto p on dv.IdProd = p.IdProd
+		WHERE MONTH(v.Fecha) = @mes
+		GROUP BY p.Descripcion
+		)
+
+	SELECT TOP(5) *
+	FROM ProdsVendidosMes
+	ORDER BY Cantidad ASC
+	FOR XML raw, elements, root('ProductosMenosVendidosEnMes')
+END
+GO
+
+CREATE OR ALTER PROCEDURE ddbba.AcumuladoVentasParaFechaYSucursal(@fecha DATE, @sucursal CHAR(10))
+AS
+BEGIN
+	SELECT v.Fecha, s.Localidad as Sucursal, dv.Cantidad, dv.Subtotal
+	FROM Sales.Venta v JOIN Sales.DetalleVenta dv on v.IdVenta = dv.IdVenta
+		JOIN Production.Sucursal s on v.IdSuc = S.IdSuc
+	WHERE v.Fecha = @fecha AND s.Localidad = @sucursal
+	FOR XML raw, elements, root('AcumuladoVentasParaFechaYSucursal')
+END
+GO
