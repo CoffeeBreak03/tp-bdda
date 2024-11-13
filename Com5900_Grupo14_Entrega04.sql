@@ -441,12 +441,13 @@ BEGIN
 END
 GO
 /*
-EXEC Production.ImportInfoComp 'C:\Users\parof\Documents\Documentos Varios\Universidad\Materias\Bases de datos aplicada\TP\TP_integrador_Archivos\Informacion_complementaria.xlsx'
-EXEC Production.ImportCatalogo 'C:\Users\parof\Documents\Documentos Varios\Universidad\Materias\Bases de datos aplicada\TP\TP_integrador_Archivos\Productos\catalogo.csv', 'C:\Users\parof\Documents\Documentos Varios\Universidad\Materias\Bases de datos aplicada\TP\TP_integrador_Archivos\Informacion_complementaria.xlsx'
-EXEC Production.ImportElectrodomesticos 'C:\Users\parof\Documents\Documentos Varios\Universidad\Materias\Bases de datos aplicada\TP\TP_integrador_Archivos\Productos\Electronic accessories.xlsx'
-EXEC Production.ImportProductosImportados 'C:\Users\parof\Documents\Documentos Varios\Universidad\Materias\Bases de datos aplicada\TP\TP_integrador_Archivos\Productos\Productos_importados.xlsx'
-EXEC Production.ImportVentas 'C:\Users\parof\Documents\Documentos Varios\Universidad\Materias\Bases de datos aplicada\TP\TP_integrador_Archivos\Ventas_registradas.csv'
-GO*/
+EXEC Production.ImportInfoComp 'D:\TP_integrador_Archivos\Informacion_complementaria.xlsx'
+EXEC Production.ImportCatalogo 'D:\TP_integrador_Archivos\Productos\catalogo.csv', 'D:\TP_integrador_Archivos\Informacion_complementaria.xlsx'
+EXEC Production.ImportElectrodomesticos 'D:\TP_integrador_Archivos\Productos\Electronic accessories.xlsx'
+EXEC Production.ImportProductosImportados 'D:\TP_integrador_Archivos\Productos\Productos_importados.xlsx'
+EXEC Production.ImportVentas 'D:\TP_integrador_Archivos\Ventas_registradas.csv'
+GO
+*/
 
 CREATE OR ALTER PROCEDURE ddbba.TotalFacturadoPorDia(@mes SMALLINT, @año INT)
 AS

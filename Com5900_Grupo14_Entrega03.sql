@@ -313,7 +313,7 @@ CREATE OR ALTER PROCEDURE Production.InsertSucursal
 	@Ciudad CHAR(12),
 	@Provincia VARCHAR(24),
 	@Horario VARCHAR(25),
-	@Telefono INT
+	@Telefono VARCHAR(8)
 AS
 BEGIN
 	IF NOT EXISTS(SELECT 1 FROM Production.Sucursal WHERE Direccion = @Direccion)
@@ -465,7 +465,7 @@ BEGIN
 	BEGIN
 		IF NOT EXISTS (SELECT 1 FROM Production.Producto WHERE Descripcion = @Descripcion AND NomProd = @NombreProd)
 		BEGIN
-			INSERT INTO Production.Producto(CantVendida, NomProd, Descripcion, IdLinProd, Proveedor, PrecioUnit) 
+			INSERT INTO Production.Producto(CantIngresada, NomProd, Descripcion, IdLinProd, Proveedor, PrecioUnit) 
 			VALUES(@CantIngreso, @Descripcion, @NombreProd, @IdLinProd, @Proveedor, @PrecioUnit);
 	
 			EXEC ddbba.InsertReg @Mod='I', @Txt = 'INSERTAR REGISTRO EN TABLA PRODUCTO';
@@ -638,6 +638,10 @@ BEGIN
 		SET Baja = GETDATE()
 		WHERE IdTipoCli = @IdTCli;
 
+		UPDATE Person.TipoCliente
+		SET Baja = GETDATE()
+		WHERE IdTipoCli = @IdTCli;
+
 		EXEC ddbba.InsertReg @Mod='D', @Txt = N'BORRADO LÓGICO DE REGISTRO EN TABLA TIPO CLIENTE';
 	END
 	ELSE
@@ -742,7 +746,7 @@ GO
 
 ---TABLA FACTURA---
 CREATE OR ALTER PROCEDURE Sales.InsertFactura
-	@NroFactura INT,
+	@NroFactura CHAR(12),
 	@IdTipoFac INT,
 	@Fecha DATE,
 	@Monto NUMERIC(7,2),
@@ -763,13 +767,13 @@ BEGIN
 	ELSE
 	BEGIN
 		EXEC ddbba.InsertReg @Mod='I', @Txt = 'ERROR PARA INSERTAR REGISTRO EN TABLA FACTURA';
-		RAISERROR('FACTURA REPETIDA %d | %d | %d', 16, 1, @NroFactura, @IdTipoFac, @NroVent);
+		RAISERROR('FACTURA REPETIDA %s | %d | %d', 16, 1, @NroFactura, @IdTipoFac, @NroVent);
 	END
 END
 GO
 
 CREATE OR ALTER PROCEDURE Sales.DeleteFactura	--BORRADO LÓGICO
-	@NroFactura INT
+	@NroFactura CHAR(12)
 AS
 BEGIN
 	IF EXISTS(SELECT 1 FROM Sales.Factura WHERE NroFact = @NroFactura)
@@ -853,7 +857,7 @@ BEGIN
 		ELSE
 		BEGIN
 			EXEC ddbba.InsertReg @Mod='I', @Txt = 'ERROR PARA INSERTAR REGISTRO EN TABLA PAGO';
-			RAISERROR('PAGO EXISTENTE %d', 16, 1, @NroPago);
+			RAISERROR('PAGO EXISTENTE %s', 16, 1, @NroPago);
 		END
 	END
 	ELSE
@@ -890,14 +894,16 @@ GO
 CREATE OR ALTER PROCEDURE Sales.InsertVenta
 	@IdSuc INT,
 	@IdEmp INT,
-	@IdCli INT
+	@IdCli INT,
+	@Fecha DATE,
+	@Hora TIME
 AS
 BEGIN
 	IF EXISTS (SELECT 1 FROM Person.Empleado WHERE IdEmp = @IdEmp)
 		AND EXISTS (SELECT 1 FROM Production.Sucursal WHERE IdSuc = @IdSuc)
 	BEGIN
-		INSERT INTO Sales.Venta (IdSuc, IdEmp, IdClI)
-		VALUES (@IdSuc, @IdEmp, @IdCli)
+		INSERT INTO Sales.Venta (IdSuc, IdEmp, IdClI, Fecha, Hora)
+		VALUES (@IdSuc, @IdEmp, @IdCli, @Fecha, @Hora)
 
 		EXEC ddbba.InsertReg @Mod = 'I', @Txt = 'INSERTAR REGISTRO EN TABLA VENTA'
 	END
