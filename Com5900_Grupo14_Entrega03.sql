@@ -315,7 +315,7 @@ CREATE OR ALTER PROCEDURE Production.InsertSucursal
 	@Ciudad CHAR(12),
 	@Provincia VARCHAR(24),
 	@Horario VARCHAR(25),
-	@Telefono INT
+	@Telefono CHAR(10)
 AS
 BEGIN
 	IF NOT EXISTS(SELECT 1 FROM Production.Sucursal WHERE Direccion = @Direccion)
@@ -1008,7 +1008,7 @@ GO
 
 --- TABLA NOTA DE CREDITO ---
 CREATE OR ALTER PROCEDURE Sales.InsertNotaCredito
-    @NroFact INT,
+    @NroFact CHAR(12),
 	@Producto VARCHAR(90),
     @Monto DECIMAL(18, 2),
 	@Motivo VARCHAR(255)

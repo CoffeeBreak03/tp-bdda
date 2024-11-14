@@ -491,6 +491,7 @@ BEGIN
 		SELECT DATENAME(WEEKDAY, v.Fecha), d.Subtotal
 		FROM Sales.Venta v JOIN Sales.DetalleVenta d on v.IdVenta = d.IdVenta
 		WHERE MONTH(v.Fecha) = @mes AND YEAR(v.Fecha) = @año
+		AND v.Estado = 'ACTIVA'
 	)
 
 	SELECT Dia, SUM(Monto) as Monto FROM VentasPorDiaDeSemana
@@ -506,6 +507,7 @@ BEGIN
 	FROM Sales.Venta v JOIN Sales.DetalleVenta dv on v.IdVenta = dv.IdVenta
 		JOIN Production.Sucursal s on v.IdSuc = s.IdSuc
 		JOIN Person.Empleado e on s.IdSuc = e.IdSuc
+	WHERE v.Estado = 'ACTIVA' AND s.Baja = NULL AND e.Baja = NULL
 	GROUP BY e.Turno, DATENAME(MONTH, v.Fecha)
 	ORDER BY e.Turno, Mes
 	FOR XML raw, elements, root('TotalFacturadoPorTurnoPorMes')
@@ -518,6 +520,7 @@ BEGIN
 	SELECT v.Fecha, SUM(dv.Cantidad) as Cantidad
 	FROM Sales.Venta v JOIN Sales.DetalleVenta dv on v.IdVenta = dv.IdVenta
 	WHERE v.Fecha >= @fechaIni AND v.Fecha <= @fechaFin
+	AND v.Estado = 'ACTIVA'
 	GROUP BY v.Fecha
 	ORDER BY SUM(dv.Cantidad) DESC
 	FOR XML raw, elements, root('CantidadProdVendidosEnRangoFecha')
@@ -531,6 +534,7 @@ BEGIN
 	FROM Sales.Venta v JOIN Sales.DetalleVenta dv on v.IdVenta = dv.IdVenta
 		JOIN Production.Sucursal s on v.IdSuc = S.IdSuc
 	WHERE v.Fecha >= @fechaIni AND v.Fecha <= @fechaFin
+	AND v.Estado = 'ACTIVA' AND s.Baja = NULL
 	GROUP BY v.Fecha, s.Localidad 
 	ORDER BY SUM(dv.Cantidad) DESC
 	FOR XML raw, elements, root('CantidadProdVendidosPorSucursalEnRangoFecha')
@@ -545,6 +549,7 @@ BEGIN
 		FROM Sales.Venta v JOIN Sales.DetalleVenta dv on v.IdVenta = dv.IdVenta
 		JOIN Production.Producto p on dv.IdProd = p.IdProd
 		WHERE MONTH(v.Fecha) = @mes
+		AND v.Estado = 'ACTIVA' AND p.Baja = NULL
 		GROUP BY DATEPART(WEEK, v.Fecha) - DATEPART(WEEK, DATETRUNC(MONTH, v.Fecha)) + 1, p.Descripcion
 		)
 
@@ -563,6 +568,7 @@ BEGIN
 		FROM Sales.Venta v JOIN Sales.DetalleVenta dv on v.IdVenta = dv.IdVenta
 		JOIN Production.Producto p on dv.IdProd = p.IdProd
 		WHERE MONTH(v.Fecha) = @mes
+		AND v.Estado = 'ACTIVA' AND p.Baja = NULL
 		GROUP BY p.Descripcion
 		)
 
@@ -580,6 +586,7 @@ BEGIN
 	FROM Sales.Venta v JOIN Sales.DetalleVenta dv on v.IdVenta = dv.IdVenta
 		JOIN Production.Sucursal s on v.IdSuc = S.IdSuc
 	WHERE v.Fecha = @fecha AND s.Localidad = @sucursal
+	AND v.Estado = 'ACTIVA' AND s.Baja = NULL
 	FOR XML raw, elements, root('AcumuladoVentasParaFechaYSucursal')
 END
 GO
