@@ -470,7 +470,8 @@ BEGIN
 	UPDATE pd
 	SET pd.CantVendida =  pd.CantVendida + nd.Cantidad
 	FROM Production.Producto pd
-		INNER JOIN @NuevosDetalles nd ON pd.IdProd = nd.IdProd;
+		INNER JOIN @Nuev
+		osDetalles nd ON pd.IdProd = nd.IdProd;
 
 	EXEC ddbba.InsertReg @Mod='I', @Txt = 'IMPORTAR PRODUCTOS DE VENTAS_REGISTRADAS.CSV'
 END

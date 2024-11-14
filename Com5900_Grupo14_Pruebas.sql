@@ -409,7 +409,7 @@ SELECT * FROM Sales.Factura
 --CASOS DE EXITO
 EXEC Sales.InsertPago
 	@NroPago = '5621-9999-5123-8725',
-	@IdVenta = 12,
+	@IdFact = 12,
 	@Monto = 52.66,
 	@MedPago = 2;
 
@@ -422,19 +422,19 @@ SELECT * FROM Sales.Pago
 --CASOS DE FALLO
 EXEC Sales.InsertPago
 	@NroPago = '4660-1046-8238-6585', --ERROR POR PAGO EXISTENTE
-	@IdVenta = 12,
+	@IdFact = 12,
 	@Monto = 52.66,
 	@MedPago = 2;
 
 EXEC Sales.InsertPago
 	@NroPago = '5621-9999-5123-8725',
-	@IdVenta = 12,
+	@IdFact = 12,
 	@Monto = 52.66,
 	@MedPago = 12; --ID MEDIO DE PAGO INVALIDO
 
 EXEC Sales.InsertPago
 	@NroPago = '5621-9999-5123-8725',
-	@IdVenta = 2390, --ID DE VENTA INVALIDO
+	@IdFact = 2390, --ID DE VENTA INVALIDO
 	@Monto = 52.66,
 	@MedPago = 2;
 
@@ -445,3 +445,40 @@ EXEC Sales.UpdateEstadoPago
 EXEC Sales.UpdateEstadoPago
 	@IdPago = 12,
 	@Estado = 'CAVANI'; -- ESTADO INVALIDO
+
+--NOTA DE CREDITO
+--CASOS DE EXITO
+EXEC Sales.InsertNotaCredito
+    @NroFact = '226-31-3081',
+    @IdProd = 6487,
+    @Monto = 2.00,
+    @Motivo = 'Devolución de producto dañado';
+
+SELECT * FROM Sales.NotaCredito
+
+--CASOS DE FALLLO
+EXEC Sales.InsertNotaCredito
+    @NroFact = '631-41-3108', --ERROR POR FACTURA CANCELADA
+    @IdProd = 6456,
+    @Monto = 5.80,
+    @Motivo = 'Devolución de producto vencido';
+
+EXEC Sales.InsertNotaCredito
+    @NroFact = '5546-85-4168', --ERROR POR FACTURA INEXISTENTE
+    @IdProd = 6456,
+    @Monto = 5.80,
+    @Motivo = 'Devolución de producto vencido';
+
+EXEC Sales.InsertNotaCredito
+    @NroFact = '373-73-7910',
+    @IdProd = 6487,
+    @Monto = 90.00, --ERROR POR TOTAL DE FACTURA MENOR AL MONTO DEL NC
+    @Motivo = 'Devolución de producto dañado';
+
+EXEC Sales.InsertNotaCredito
+    @NroFact = '373-73-7910',
+    @IdProd = 12, --ERROR POR PRODUCTO NO EXISTENTE
+    @Monto = 2.00,
+    @Motivo = 'Devolución de producto dañado';
+
+SELECT * FROM Sales.NotaCredito
