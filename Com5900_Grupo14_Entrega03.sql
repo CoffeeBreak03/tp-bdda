@@ -802,23 +802,23 @@ GO
 
 ---PARA TABLA MEDIO DE PAGO---
 CREATE OR ALTER PROCEDURE Sales.InsertMedPag
-	@Desc CHAR(15)
+    @Desc CHAR(21)
 AS
 BEGIN
-	SET @Desc = UPPER(@Desc);
+    SET @Desc = UPPER(@Desc);
 
-	IF NOT EXISTS (SELECT 1 FROM Sales.Mediopago WHERE Descripcion = @Desc)
-	BEGIN
-		INSERT INTO Sales.Mediopago (Descripcion)
-		VALUES (@Desc);
+    IF NOT EXISTS (SELECT 1 FROM Sales.Mediopago WHERE Descripcion = @Desc AND Baja IS NULL)
+    BEGIN
+        INSERT INTO Sales.Mediopago (Descripcion)
+        VALUES (@Desc);
 
-		EXEC ddbba.InsertReg @Mod='I', @Txt = 'INSERTAR REGISTRO EN TABLA MEDIO DE PAGO';
-	END
-	ELSE
-	BEGIN
-		EXEC ddbba.InsertReg @Mod = 'I', @Txt = N'ERROR EN INSERTAR REGISTRO EN TABLA MEDIO DE PAGO / DESCRIPCIÓN DUPLICADA';
-		RAISERROR('MEDIO DE PAGO REPETIDO %s', 16, 1, @Desc);
-	END
+        EXEC ddbba.InsertReg @Mod='I', @Txt = 'INSERTAR REGISTRO EN TABLA MEDIO DE PAGO';
+    END
+    ELSE
+    BEGIN
+        EXEC ddbba.InsertReg @Mod = 'I', @Txt = N'ERROR EN INSERTAR REGISTRO EN TABLA MEDIO DE PAGO / DESCRIPCIÓN DUPLICADA';
+        RAISERROR('MEDIO DE PAGO REPETIDO %s', 16, 1, @Desc);
+    END
 END
 GO
 
