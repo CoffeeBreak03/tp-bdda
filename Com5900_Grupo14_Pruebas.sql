@@ -371,10 +371,7 @@ EXEC Sales.InsertFactura
     @IdTipoFac = 3, 
     @Fecha = '2024-10-10', 
     @Monto = 350.00, 
-    @NroVent = 12; 
-
-EXEC Sales.DeleteFactura	
-	@NroFactura = '750-67-8428';
+    @NroVent = 12;
 
 SELECT * FROM Sales.Factura
 
@@ -399,9 +396,6 @@ EXEC Sales.InsertFactura
     @Fecha = '2024-10-10', 
     @Monto = 350.00, 
     @NroVent = 10002; --NO EXISTE NRO DE VENTA
-
-EXEC Sales.DeleteFactura	
-	@NroFactura = '355-83-5941';
 
 SELECT * FROM Sales.Factura
 

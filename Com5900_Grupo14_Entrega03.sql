@@ -924,20 +924,21 @@ BEGIN
 END
 GO
 
-
 ---TABLA VENTA---
 CREATE OR ALTER PROCEDURE Sales.InsertVenta
 	@IdSuc INT,
 	@IdEmp INT,
-	@IdCli INT
+	@IdCli INT,
+	@Fecha DATE,
+	@Hora TIME
 AS
 BEGIN
 	IF EXISTS (SELECT 1 FROM Person.Empleado WHERE IdEmp = @IdEmp)
 		AND EXISTS (SELECT 1 FROM Production.Sucursal WHERE IdSuc = @IdSuc)
 		AND EXISTS (SELECT 1 FROM Person.Cliente WHERE IdCli = @IdCli)
 	BEGIN
-		INSERT INTO Sales.Venta (IdSuc, IdEmp, IdClI)
-		VALUES (@IdSuc, @IdEmp, @IdCli)
+		INSERT INTO Sales.Venta (IdSuc, IdEmp, IdClI, Fecha, Hora)
+		VALUES (@IdSuc, @IdEmp, @IdCli, @Fecha, @Hora)
 
 		EXEC ddbba.InsertReg @Mod = 'I', @Txt = 'INSERTAR REGISTRO EN TABLA VENTA'
 	END
