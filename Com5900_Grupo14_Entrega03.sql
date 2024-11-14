@@ -771,7 +771,7 @@ END
 GO
 
 CREATE OR ALTER PROCEDURE Sales.CambiarEstadoFacturaPagada
-	@NroFactura INT,
+	@NroFactura CHAR(12),
 	@IdPago INT
 AS
 BEGIN
