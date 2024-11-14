@@ -445,21 +445,3 @@ EXEC Sales.UpdateEstadoPago
 EXEC Sales.UpdateEstadoPago
 	@IdPago = 12,
 	@Estado = 'CAVANI'; -- ESTADO INVALIDO
-		
-
-/*
-SELECT * FROM Person.Cliente
-SELECT * FROM Person.Empleado
-SELECT * FROM Person.NomYAp
-SELECT * FROM Person.TipoCliente
-SELECT * FROM Production.LineaProducto
-SELECT * FROM Production.Producto
-SELECT * FROM Production.Sucursal
-SELECT * FROM Sales.DetalleVenta
-SELECT * FROM Sales.Factura
-SELECT * FROM Sales.Mediopago
-SELECT * FROM Sales.NotaCredito
-SELECT * FROM Sales.Pago
-SELECT * FROM Sales.TipoFactura
-SELECT * FROM Sales.Venta
-*/

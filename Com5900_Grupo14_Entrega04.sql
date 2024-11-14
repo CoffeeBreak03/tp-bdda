@@ -203,7 +203,6 @@ GO
 
 
 --- ARCHIVO INFORMACION COMPLEMETARIA.XLSX ---
-
 CREATE OR ALTER PROCEDURE Production.ImportInfoComp
 	@NomArch VARCHAR(255)
 AS
@@ -476,14 +475,8 @@ BEGIN
 	EXEC ddbba.InsertReg @Mod='I', @Txt = 'IMPORTAR PRODUCTOS DE VENTAS_REGISTRADAS.CSV'
 END
 GO
-/*
-EXEC Production.ImportInfoComp 'E:\UNIVERSIDAD\BBDDAplicada\TP final\TP_integrador_Archivos\Informacion_complementaria.xlsx'
-EXEC Production.ImportCatalogo 'E:\UNIVERSIDAD\BBDDAplicada\TP final\TP_integrador_Archivos\Productos\catalogo.csv', 'E:\UNIVERSIDAD\BBDDAplicada\TP final\TP_integrador_Archivos\Informacion_complementaria.xlsx'
-EXEC Production.ImportElectrodomesticos 'E:\UNIVERSIDAD\BBDDAplicada\TP final\TP_integrador_Archivos\Productos\Electronic accessories.xlsx'
-EXEC Production.ImportProductosImportados 'E:\UNIVERSIDAD\BBDDAplicada\TP final\TP_integrador_Archivos\Productos\Productos_importados.xlsx'
-EXEC Production.ImportVentas 'E:\UNIVERSIDAD\BBDDAplicada\TP final\TP_integrador_Archivos\Ventas_registradas.csv'
-GO*/
 
+--REGISTROS--
 CREATE OR ALTER PROCEDURE ddbba.TotalFacturadoPorDia(@mes SMALLINT, @año INT)
 AS
 BEGIN
@@ -579,7 +572,7 @@ BEGIN
 END
 GO
 
-CREATE OR ALTER PROCEDURE ddbba.AcumuladoVentasParaFechaYSucursal(@fecha DATE, @sucursal CHAR(10))
+CREATE OR ALTER PROCEDURE ddbba.AcumuladoVentasParaFechaYSucursal(@fecha DATE, @sucursal CHAR(20))
 AS
 BEGIN
 	SELECT v.Fecha, s.Localidad as Sucursal, dv.Cantidad, dv.Subtotal
@@ -591,9 +584,4 @@ BEGIN
 END
 GO
 
-
---EXEC ddbba.TotalFacturadoPorDia @mes = 02, @año = 2019
---EXEC ddbba.TotalFacturadoPorTurnoPorMes
---EXEC ddbba.CantidadProdVendidosEnRangoFecha @fechaIni = '2019-01-26', @fechaFin= '2019-03-14'
---EXEC ddbba.CantidadProdVendidosPorSucursalEnRangoFecha @fechaIni = '2019-01-26', @fechaFin= '2019-03-14'
 
