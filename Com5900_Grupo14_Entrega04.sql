@@ -2,12 +2,12 @@ USE [Com5600G14]
 GO
 
 -------------------------------------------------------
----------------- IMPORTACIÃ“N DE DATOS -----------------
+---------------- IMPORTACIÓN DE DATOS -----------------
 -------------------------------------------------------
 
 --- ARCHIVO CATALOGO.CSV ---
 CREATE OR ALTER PROCEDURE Production.ImportCatalogo
-	@NomArchCat NVARCHAR(255), -- ParÃ¡metro para el nombre del archivo
+	@NomArchCat NVARCHAR(255), -- Parámetro para el nombre del archivo
 	@NomArchLineaProd NVARCHAR(255)
 AS
 BEGIN
@@ -36,7 +36,7 @@ BEGIN
 		FechaIng DATE
 	);
 
-	-- Usar el parÃ¡metro @NomArch en el BULK INSERT
+	-- Usar el parámetro @NomArch en el BULK INSERT
 	EXEC('
 		BULK INSERT #TmpCatalogo
 		FROM ''' + @NomArchCat + '''
@@ -50,7 +50,7 @@ BEGIN
 
 	-- Usar el parametro @NomArchLineaProd en OPENROWSET e insertar en la tabla #TempCategoria
 	EXEC('INSERT INTO #TempCategoria (Descripcion, NomProd) ' +
-    'SELECT [LÃNEA DE PRODUCTO], PRODUCTO ' +
+    'SELECT [LÍNEA DE PRODUCTO], PRODUCTO ' +
     'FROM OPENROWSET(''Microsoft.ACE.OLEDB.16.0'', ' +
     '''Excel 12.0;Database=' + @NomArchLineaProd + ';HDR=YES'', ' +
     '''SELECT * FROM [Clasificacion productos$]'')');
@@ -111,7 +111,7 @@ CREATE OR ALTER PROCEDURE Production.ImportElectrodomesticos
 	@NomArch VARCHAR(255)
 AS
 BEGIN
-	DECLARE @DescCategoria CHAR(16) = 'ELECTRODOMÃ‰STICO';
+	DECLARE @DescCategoria CHAR(16) = 'ELECTRODOMÉSTICO';
 
 	IF NOT EXISTS(SELECT 1 FROM Production.LineaProducto WHERE Descripcion = @DescCategoria)	-- SOLO LO INSERTO LA PRIMERA VEZ
 		EXEC Production.InsertLineaProd @Descripcion = @DescCategoria;
@@ -156,7 +156,7 @@ BEGIN
 	);
 
 	EXEC('INSERT INTO #TempProdImport(TEXTO)
-    SELECT NombreProducto + ''|'' + Proveedor + ''|'' + CategorÃ­a + ''|'' + CantidadPorUnidad + ''|'' + TRY_CAST(PrecioUnidad AS VARCHAR(10))
+    SELECT NombreProducto + ''|'' + Proveedor + ''|'' + Categoría + ''|'' + CantidadPorUnidad + ''|'' + TRY_CAST(PrecioUnidad AS VARCHAR(10))
     FROM OPENROWSET(''Microsoft.ACE.OLEDB.16.0'', 
                      ''Excel 12.0;Database=' + @NomArch + ';HDR=YES;IMEX=1'', 
                      ''SELECT * FROM [Listado de Productos$]'')');
@@ -306,11 +306,11 @@ BEGIN
 
 
 	EXEC('INSERT INTO Production.LineaProducto (Descripcion)
-		SELECT DISTINCT([LÃNEA DE PRODUCTO])
+		SELECT DISTINCT([LÍNEA DE PRODUCTO])
 		FROM OPENROWSET(''Microsoft.ACE.OLEDB.16.0'', 
 						 ''Excel 12.0;Database=' + @NomArch + ''', 
 						 ''SELECT * FROM [Clasificacion productos$]'')
-		WHERE NOT EXISTS(SELECT 1 FROM Production.LineaProducto WHERE Descripcion = [LÃNEA DE PRODUCTO] COLLATE Latin1_General_CI_AS)');
+		WHERE NOT EXISTS(SELECT 1 FROM Production.LineaProducto WHERE Descripcion = [LÍNEA DE PRODUCTO] COLLATE Latin1_General_CI_AS)');
 
 	EXEC ddbba.InsertReg @Mod='I', @Txt = 'IMPOTAR PRODUCTOS DE INFORMACION_COMPLEMENTARIA.XLSX'
 END
@@ -484,13 +484,14 @@ EXEC Production.ImportProductosImportados 'E:\UNIVERSIDAD\BBDDAplicada\TP final\
 EXEC Production.ImportVentas 'E:\UNIVERSIDAD\BBDDAplicada\TP final\TP_integrador_Archivos\Ventas_registradas.csv'
 GO*/
 
-CREATE OR ALTER PROCEDURE ddbba.TotalFacturadoPorDia(@mes SMALLINT, @aÃ±o INT)
+CREATE OR ALTER PROCEDURE ddbba.TotalFacturadoPorDia(@mes SMALLINT, @año INT)
 AS
 BEGIN
 	WITH VentasPorDiaDeSemana(Dia, Monto) as (
 		SELECT DATENAME(WEEKDAY, v.Fecha), d.Subtotal
 		FROM Sales.Venta v JOIN Sales.DetalleVenta d on v.IdVenta = d.IdVenta
-		WHERE MONTH(v.Fecha) = @mes AND YEAR(v.Fecha) = @aÃ±o
+		WHERE MONTH(v.Fecha) = @mes AND YEAR(v.Fecha) = @año
+		AND v.Estado = 'ACTIVA'
 	)
 
 	SELECT Dia, SUM(Monto) as Monto FROM VentasPorDiaDeSemana
@@ -506,6 +507,7 @@ BEGIN
 	FROM Sales.Venta v JOIN Sales.DetalleVenta dv on v.IdVenta = dv.IdVenta
 		JOIN Production.Sucursal s on v.IdSuc = s.IdSuc
 		JOIN Person.Empleado e on s.IdSuc = e.IdSuc
+	WHERE v.Estado = 'ACTIVA' AND s.Baja = NULL AND e.Baja = NULL
 	GROUP BY e.Turno, DATENAME(MONTH, v.Fecha)
 	ORDER BY e.Turno, Mes
 	FOR XML raw, elements, root('TotalFacturadoPorTurnoPorMes')
@@ -518,6 +520,7 @@ BEGIN
 	SELECT v.Fecha, SUM(dv.Cantidad) as Cantidad
 	FROM Sales.Venta v JOIN Sales.DetalleVenta dv on v.IdVenta = dv.IdVenta
 	WHERE v.Fecha >= @fechaIni AND v.Fecha <= @fechaFin
+	AND v.Estado = 'ACTIVA'
 	GROUP BY v.Fecha
 	ORDER BY SUM(dv.Cantidad) DESC
 	FOR XML raw, elements, root('CantidadProdVendidosEnRangoFecha')
@@ -531,6 +534,7 @@ BEGIN
 	FROM Sales.Venta v JOIN Sales.DetalleVenta dv on v.IdVenta = dv.IdVenta
 		JOIN Production.Sucursal s on v.IdSuc = S.IdSuc
 	WHERE v.Fecha >= @fechaIni AND v.Fecha <= @fechaFin
+	AND v.Estado = 'ACTIVA' AND s.Baja = NULL
 	GROUP BY v.Fecha, s.Localidad 
 	ORDER BY SUM(dv.Cantidad) DESC
 	FOR XML raw, elements, root('CantidadProdVendidosPorSucursalEnRangoFecha')
@@ -545,6 +549,7 @@ BEGIN
 		FROM Sales.Venta v JOIN Sales.DetalleVenta dv on v.IdVenta = dv.IdVenta
 		JOIN Production.Producto p on dv.IdProd = p.IdProd
 		WHERE MONTH(v.Fecha) = @mes
+		AND v.Estado = 'ACTIVA' AND p.Baja = NULL
 		GROUP BY DATEPART(WEEK, v.Fecha) - DATEPART(WEEK, DATETRUNC(MONTH, v.Fecha)) + 1, p.Descripcion
 		)
 
@@ -563,6 +568,7 @@ BEGIN
 		FROM Sales.Venta v JOIN Sales.DetalleVenta dv on v.IdVenta = dv.IdVenta
 		JOIN Production.Producto p on dv.IdProd = p.IdProd
 		WHERE MONTH(v.Fecha) = @mes
+		AND v.Estado = 'ACTIVA' AND p.Baja = NULL
 		GROUP BY p.Descripcion
 		)
 
@@ -580,12 +586,13 @@ BEGIN
 	FROM Sales.Venta v JOIN Sales.DetalleVenta dv on v.IdVenta = dv.IdVenta
 		JOIN Production.Sucursal s on v.IdSuc = S.IdSuc
 	WHERE v.Fecha = @fecha AND s.Localidad = @sucursal
+	AND v.Estado = 'ACTIVA' AND s.Baja = NULL
 	FOR XML raw, elements, root('AcumuladoVentasParaFechaYSucursal')
 END
 GO
 
 
---EXEC ddbba.TotalFacturadoPorDia @mes = 02, @aÃ±o = 2019
+--EXEC ddbba.TotalFacturadoPorDia @mes = 02, @año = 2019
 --EXEC ddbba.TotalFacturadoPorTurnoPorMes
 --EXEC ddbba.CantidadProdVendidosEnRangoFecha @fechaIni = '2019-01-26', @fechaFin= '2019-03-14'
 --EXEC ddbba.CantidadProdVendidosPorSucursalEnRangoFecha @fechaIni = '2019-01-26', @fechaFin= '2019-03-14'
