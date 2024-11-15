@@ -20,6 +20,10 @@
 
 USE Com5600G14;
 
+--- ARCHIVO INFORMACION COMPLEMETARIA.XLSX ---
+EXEC Production.ImportInfoComp 
+	@NomArch = 'D:\TP_integrador_Archivos\Informacion_complementaria.xlsx';
+
 --- ARCHIVO CATALOGO.CSV ---
 EXEC Production.ImportCatalogo 
 	@NomArchCat = 'D:\TP_integrador_Archivos\Productos\catalogo.csv', 
@@ -32,10 +36,6 @@ EXEC Production.ImportElectrodomesticos
 --- ARCHIVO PRODUCTOS IMPORTADOS.XLSX ---
 EXEC Production.ImportProductosImportados 
 	@NomArch = 'D:\TP_integrador_Archivos\Productos\Productos_importados.xlsx';
-
---- ARCHIVO INFORMACION COMPLEMETARIA.XLSX ---
-EXEC Production.ImportInfoComp 
-	@NomArch = 'D:\TP_integrador_Archivos\Informacion_complementaria.xlsx';
 
 --- ARCHIVO INFORMACION VENTAS_REGISTRADAS.CSV ---
 EXEC Production.ImportVentas 
