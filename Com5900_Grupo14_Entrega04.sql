@@ -477,8 +477,11 @@ BEGIN
 END
 GO
 
---REGISTROS--
-CREATE OR ALTER PROCEDURE ddbba.TotalFacturadoPorDia(@mes SMALLINT, @año INT)
+----------------------------------------------
+------------------ REPORTES ------------------
+----------------------------------------------
+
+CREATE OR ALTER PROCEDURE Reporte.TotalFacturadoPorDia(@mes SMALLINT, @año INT)
 AS
 BEGIN
 	WITH VentasPorDiaDeSemana(Dia, Monto) as (
@@ -494,7 +497,7 @@ BEGIN
 END
 GO 
 
-CREATE OR ALTER PROCEDURE ddbba.TotalFacturadoPorTurnoPorMes
+CREATE OR ALTER PROCEDURE Reporte.TotalFacturadoPorTurnoPorMes
 AS
 BEGIN
 	SELECT e.Turno ,DATENAME(MONTH, v.Fecha) as Mes, SUM(dv.Subtotal) as Monto
@@ -508,7 +511,7 @@ BEGIN
 END
 GO
 
-CREATE OR ALTER PROCEDURE ddbba.CantidadProdVendidosEnRangoFecha(@fechaIni date, @fechaFin date)
+CREATE OR ALTER PROCEDURE Reporte.CantidadProdVendidosEnRangoFecha(@fechaIni date, @fechaFin date)
 AS
 BEGIN
 	SELECT v.Fecha, SUM(dv.Cantidad) as Cantidad
@@ -521,7 +524,7 @@ BEGIN
 END
 GO
 
-CREATE OR ALTER PROCEDURE ddbba.CantidadProdVendidosPorSucursalEnRangoFecha(@fechaIni date, @fechaFin date)
+CREATE OR ALTER PROCEDURE Reporte.CantidadProdVendidosPorSucursalEnRangoFecha(@fechaIni date, @fechaFin date)
 AS
 BEGIN
 	SELECT v.Fecha, s.Localidad as Sucursal, SUM(dv.Cantidad) as Cantidad
@@ -535,7 +538,7 @@ BEGIN
 END
 GO
 
-CREATE OR ALTER PROCEDURE ddbba.ProductosMasVendidosEnMes(@mes SMALLINT)
+CREATE OR ALTER PROCEDURE Reporte.ProductosMasVendidosEnMes(@mes SMALLINT)
 AS
 BEGIN
 	WITH ProdsVendidosSemana (Semana, Producto, Cantidad) AS (
@@ -554,7 +557,7 @@ BEGIN
 END
 GO
 
-CREATE OR ALTER PROCEDURE ddbba.ProductosMenosVendidosEnMes(@mes SMALLINT)
+CREATE OR ALTER PROCEDURE Reporte.ProductosMenosVendidosEnMes(@mes SMALLINT)
 AS
 BEGIN
 	WITH ProdsVendidosMes (Producto, Cantidad) AS (
@@ -573,7 +576,7 @@ BEGIN
 END
 GO
 
-CREATE OR ALTER PROCEDURE ddbba.AcumuladoVentasParaFechaYSucursal(@fecha DATE, @sucursal CHAR(20))
+CREATE OR ALTER PROCEDURE Reporte.AcumuladoVentasParaFechaYSucursal(@fecha DATE, @sucursal CHAR(20))
 AS
 BEGIN
 	SELECT v.Fecha, s.Localidad as Sucursal, dv.Cantidad, dv.Subtotal
@@ -584,5 +587,3 @@ BEGIN
 	FOR XML raw, elements, root('AcumuladoVentasParaFechaYSucursal')
 END
 GO
-
-
