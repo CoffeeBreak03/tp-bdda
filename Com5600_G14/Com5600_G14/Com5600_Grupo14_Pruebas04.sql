@@ -55,6 +55,23 @@ VALUES('Mateo', 'González'),
 ('Francisco', 'Castro')
 GO
 
+--Con esto verificamos que las tablas antes de la importacion estan vacias
+/* 
+SELECT * FROM Person.Cliente
+SELECT * FROM Person.Empleado
+SELECT * FROM Person.NomYAp
+SELECT * FROM Person.TipoCliente
+SELECT * FROM Production.LineaProducto
+SELECT * FROM Production.Producto
+SELECT * FROM Production.Sucursal
+SELECT * FROM Sales.DetalleVenta 
+SELECT * FROM Sales.Factura
+SELECT * FROM Sales.Mediopago
+SELECT * FROM Sales.Pago
+SELECT * FROM Sales.TipoFactura
+SELECT * FROM Sales.Venta
+*/
+
 --- ARCHIVO INFORMACION COMPLEMETARIA.XLSX ---
 EXEC Production.ImportInfoComp 
 	@NomArch = 'D:\TP_integrador_Archivos\Informacion_complementaria.xlsx';

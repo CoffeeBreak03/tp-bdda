@@ -193,7 +193,7 @@ BEGIN
 	BEGIN
 		IF NOT EXISTS (SELECT 1 FROM Production.Producto WHERE Descripcion = @Descripcion AND NomProd = @NombreProd)
 		BEGIN
-			INSERT INTO Production.Producto(CantVendida, NomProd, Descripcion, IdLinProd, Proveedor, PrecioUnit) 
+			INSERT INTO Production.Producto(CantIngresada, NomProd, Descripcion, IdLinProd, Proveedor, PrecioUnit) 
 			VALUES(@CantIngreso, @Descripcion, @NombreProd, @IdLinProd, @Proveedor, @PrecioUnit);
 	
 			EXEC ddbba.InsertReg @Mod='I', @Txt = 'INSERTAR REGISTRO EN TABLA PRODUCTO';
