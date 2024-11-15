@@ -7,41 +7,6 @@
 --RODRIGUEZ, MARCOS LEÓN 45040212
 ----------------------------------------------------------------
 
------ PARA USO DE ENTORNO DE PRUEBAS -----
------ CREACION DE PERSONAS -----
-IF OBJECT_ID('Person.NomYAp', 'U') IS NULL
-BEGIN
-	CREATE TABLE Person.NomYAp
-	(
-		ID INT IDENTITY(1,1) PRIMARY KEY,
-		Nombre VARCHAR(30),
-		Apellido VARCHAR(30)
-	);
-END
-GO
-
-INSERT INTO Person.NomYAp
-VALUES('Mateo', 'González'),
-('Sofía', 'Rodríguez'),
-('Santiago', 'Pérez'),
-('Camila', 'Fernández'),
-('Martín', 'López'),
-('Valentina', 'Gómez'),
-('Lucas', 'Martínez'),
-('Catalina', 'Díaz'),
-('Joaquín', 'Sánchez'),
-('Lucía', 'Torres'),
-('Benjamín', 'Ramírez'),
-('Emilia', 'Flores'),
-('Tomás', 'Romero'),
-('Julieta', 'Acosta'),
-('Facundo', 'Álvarez'),
-('Mía', 'Herrera'),
-('Ignacio', 'Aguirre'),
-('Lola', 'Pereyra'),
-('Francisco', 'Castro')
-GO
-
 CREATE OR ALTER PROCEDURE Person.ClienteRandom
 	@cantidad INT
 AS
