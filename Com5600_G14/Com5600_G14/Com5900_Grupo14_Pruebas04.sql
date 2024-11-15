@@ -12,13 +12,48 @@
 ------------------------------------
 
 --ORDEN DE EJECUCION DE LOS SP PARA IMPORTAR:
---1.Production.ImportCatalogo
---2.Production.ImportElectrodomesticos
---3.Production.ImporteProductosImportados
---4.Production.ImportInfoComp
+--1.Production.ImportInfoComp
+--2.Production.ImportCatalogo
+--3.Production.ImportElectrodomesticos
+--4.Production.ImporteProductosImportados
 --5.ImportVentas
 
 USE Com5600G14;
+
+----- PARA USO DE ENTORNO DE PRUEBAS -----
+----- CREACION DE PERSONAS -----
+IF OBJECT_ID('Person.NomYAp', 'U') IS NULL
+BEGIN
+	CREATE TABLE Person.NomYAp
+	(
+		ID INT IDENTITY(1,1) PRIMARY KEY,
+		Nombre VARCHAR(30),
+		Apellido VARCHAR(30)
+	);
+END
+GO
+
+INSERT INTO Person.NomYAp
+VALUES('Mateo', 'González'),
+('Sofía', 'Rodríguez'),
+('Santiago', 'Pérez'),
+('Camila', 'Fernández'),
+('Martín', 'López'),
+('Valentina', 'Gómez'),
+('Lucas', 'Martínez'),
+('Catalina', 'Díaz'),
+('Joaquín', 'Sánchez'),
+('Lucía', 'Torres'),
+('Benjamín', 'Ramírez'),
+('Emilia', 'Flores'),
+('Tomás', 'Romero'),
+('Julieta', 'Acosta'),
+('Facundo', 'Álvarez'),
+('Mía', 'Herrera'),
+('Ignacio', 'Aguirre'),
+('Lola', 'Pereyra'),
+('Francisco', 'Castro')
+GO
 
 --- ARCHIVO INFORMACION COMPLEMETARIA.XLSX ---
 EXEC Production.ImportInfoComp 
@@ -99,6 +134,10 @@ SELECT COUNT(*) AS TotalRegistros_Venta
 FROM Sales.Venta;
 
 --VOLVEMOS IMPORTAR PARA VERIFICAR SI ENTRAN LOS DUPLICADOS POR IMPORTACION
+--- ARCHIVO INFORMACION COMPLEMETARIA.XLSX ---
+EXEC Production.ImportInfoComp 
+	@NomArch = 'D:\TP_integrador_Archivos\Informacion_complementaria.xlsx';
+
 --- ARCHIVO CATALOGO.CSV ---
 EXEC Production.ImportCatalogo 
 	@NomArchCat = 'D:\TP_integrador_Archivos\Productos\catalogo.csv', 
@@ -111,10 +150,6 @@ EXEC Production.ImportElectrodomesticos
 --- ARCHIVO PRODUCTOS IMPORTADOS.XLSX ---
 EXEC Production.ImportProductosImportados 
 	@NomArch = 'D:\TP_integrador_Archivos\Productos\Productos_importados.xlsx';
-
---- ARCHIVO INFORMACION COMPLEMETARIA.XLSX ---
-EXEC Production.ImportInfoComp 
-	@NomArch = 'D:\TP_integrador_Archivos\Informacion_complementaria.xlsx';
 
 --- ARCHIVO INFORMACION VENTAS_REGISTRADAS.CSV ---
 EXEC Production.ImportVentas 
