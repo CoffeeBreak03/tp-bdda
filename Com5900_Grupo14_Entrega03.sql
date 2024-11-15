@@ -72,6 +72,7 @@ BEGIN
 		Horario VARCHAR(44),
 		Telefono CHAR(10),
 		CiudadOrig CHAR(10),
+		CUIT INT DEFAULT 0,
 		Baja DATE DEFAULT NULL
 	);
 END
@@ -117,6 +118,7 @@ BEGIN
 		IdSuc INT NOT NULL,
 		Legajo INT UNIQUE NOT NULL,
 		DNI INT NOT NULL,
+		CUIL INT DEFAULT 0,
 		Nombre CHAR(30) NOT NULL,
 		Apellido CHAR(20) NOT NULL,
 		Direccion VARCHAR(50),
