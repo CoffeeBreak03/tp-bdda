@@ -1,24 +1,24 @@
 ------------------------------------------------------------------
 --MATERIA: BASES DE DATOS APLICADA
 --GRUPO: 14
---BASUALDO, NICOL�S NAHUEL 44238788
+--BASUALDO, NICOLÁS NAHUEL 44238788
 --MARCONI, LUCAS MARTIN 45324860
 --PARODI, FRANCISCO MAXILIANO 44669305
---RODRIGUEZ, MARCOS LE�N 45040212
+--RODRIGUEZ, MARCOS LEÓN 45040212
 ----------------------------------------------------------------
 /*
 ENUNCIADO:
 
 El sistema debe ofrecer los siguientes reportes en xml.
-Mensual: ingresando un mes y a�o determinado mostrar el total facturado por d�as de
-la semana, incluyendo s�bado y domingo.
+Mensual: ingresando un mes y año determinado mostrar el total facturado por días de
+la semana, incluyendo sábado y domingo.
 Trimestral: mostrar el total facturado por turnos de trabajo por mes.
 Por rango de fechas: ingresando un rango de fechas a demanda, debe poder mostrar
 la cantidad de productos vendidos en ese rango, ordenado de mayor a menor.
 Por rango de fechas: ingresando un rango de fechas a demanda, debe poder mostrar
 la cantidad de productos vendidos en ese rango por sucursal, ordenado de mayor a
 menor.
-Mostrar los 5 productos m�s vendidos en un mes, por semana
+Mostrar los 5 productos más vendidos en un mes, por semana
 Mostrar los 5 productos menos vendidos en el mes.
 Mostrar total acumulado de ventas (o sea tambien mostrar el detalle) para una fecha
 y sucursal particulares
@@ -31,13 +31,13 @@ GO
 ------------------ REPORTES ------------------
 ----------------------------------------------
 
-CREATE OR ALTER PROCEDURE Reporte.TotalFacturadoPorDia(@mes SMALLINT, @a�o INT)
+CREATE OR ALTER PROCEDURE Reporte.TotalFacturadoPorDia(@mes SMALLINT, @año INT)
 AS
 BEGIN
 	WITH VentasPorDiaDeSemana(Dia, Monto) as (
 		SELECT DATENAME(WEEKDAY, v.Fecha), d.Subtotal
 		FROM Sales.Venta v JOIN Sales.DetalleVenta d on v.IdVenta = d.IdVenta
-		WHERE MONTH(v.Fecha) = @mes AND YEAR(v.Fecha) = @a�o
+		WHERE MONTH(v.Fecha) = @mes AND YEAR(v.Fecha) = @año
 		AND v.Estado = 'ACTIVA'
 	)
 
@@ -50,14 +50,42 @@ GO
 CREATE OR ALTER PROCEDURE Reporte.TotalFacturadoPorTurnoPorMes
 AS
 BEGIN
-	SELECT e.Turno ,DATENAME(MONTH, v.Fecha) as Mes, SUM(dv.Subtotal) as Monto
-	FROM Sales.Venta v JOIN Sales.DetalleVenta dv on v.IdVenta = dv.IdVenta
-		JOIN Production.Sucursal s on v.IdSuc = s.IdSuc
-		JOIN Person.Empleado e on s.IdSuc = e.IdSuc
-	WHERE v.Estado = 'ACTIVA' AND s.Baja = NULL AND e.Baja = NULL
-	GROUP BY e.Turno, DATENAME(MONTH, v.Fecha)
-	ORDER BY e.Turno, Mes
-	FOR XML raw, elements, root('TotalFacturadoPorTurnoPorMes')
+	DECLARE @UltimoAño INT;
+	DECLARE @UltimoTrimestre INT;
+	DECLARE @TrimestreInicio DATE;
+	DECLARE @TrimestreFin DATE;
+
+	-- SETEO LAS ULTIMAS FECHAS
+	SELECT 
+		@UltimoAño = YEAR(MAX(v.Fecha)),
+		@UltimoTrimestre = DATEPART(QUARTER, MAX(v.Fecha))
+	FROM Sales.Venta v
+	WHERE v.Estado = 'ACTIVA';
+
+	-- ME UBICO EN EL TRIMESTRE ASIGNADO
+	SET @TrimestreInicio = DATEFROMPARTS(@UltimoAño, (@UltimoTrimestre - 1) * 3 + 1, 1); -- INICIO DEL TRIMESTRE
+	SET @TrimestreFin = EOMONTH(DATEFROMPARTS(@UltimoAño, @UltimoTrimestre * 3, 1)); -- FIN DEL TRIMESTRE
+
+	SELECT 
+		e.Turno,
+		'Trimestre ' + CAST(@UltimoTrimestre AS VARCHAR) AS Trimestre,
+		@UltimoAño AS Año,
+		SUM(dv.Subtotal) AS Monto
+	FROM 
+		Sales.Venta v 
+		JOIN Sales.DetalleVenta dv ON v.IdVenta = dv.IdVenta
+		JOIN Production.Sucursal s ON v.IdSuc = s.IdSuc
+		JOIN Person.Empleado e ON s.IdSuc = e.IdSuc
+	WHERE 
+		v.Estado = 'ACTIVA' 
+		AND s.Baja IS NULL 
+		AND e.Baja IS NULL
+		AND v.Fecha BETWEEN @TrimestreInicio AND @TrimestreFin
+	GROUP BY 
+		e.Turno
+	ORDER BY 
+		e.Turno
+	FOR XML RAW, ELEMENTS, ROOT('TotalFacturadoPorTurnoUltimoTrimestreRegistrado')
 END
 GO
 
