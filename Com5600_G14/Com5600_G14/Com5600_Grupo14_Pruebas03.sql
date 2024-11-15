@@ -43,6 +43,9 @@ BEGIN
 END
 GO
 
+
+--Ejecutar primero las importaciones y luego los casos de prueba 
+--Ejecutar los casos de exito en orden, Gracias
 --Casos de pruebas de los procedures
 USE Com5600G14
 
