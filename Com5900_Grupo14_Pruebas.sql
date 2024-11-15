@@ -341,25 +341,22 @@ SELECT * FROM Sales.Venta
 
 --DETALLE DE VENTA
 --CASOS DE EXITO
-EXEC Sales.InsertDetVenta
+EXEC Sales.InsertDetalleVenta
 	@CantCompra = 12,
-	@Subtotal = 45.23,
-	@NroVenta = 98,
-	@IdProd =2 ;
+	@NroVenta = 2,
+	@IdProd =6428 ;
 
 SELECT * FROM Sales.DetalleVenta
 
 --CASOS DE FALLO
-EXEC Sales.InsertDetVenta
+EXEC Sales.InsertDetalleVenta
 	@CantCompra = 12,
-	@Subtotal = 55.99,
 	@NroVenta = 2000, --NRO DE VENTA NO EXISTE
-	@IdProd =2 ;
+	@IdProd =6440 ;
 
-EXEC Sales.InsertDetVenta
+EXEC Sales.InsertDetalleVenta
 	@CantCompra = 12,
-	@Subtotal = 12.55,
-	@NroVenta = 92,
+	@NroVenta = 6440,
 	@IdProd = 99999; --ID DE PROD INEXISTENTE
 
 SELECT * FROM Sales.DetalleVenta
