@@ -2,12 +2,12 @@ USE [Com5600G14]
 GO
 
 -------------------------------------------------------
----------------- IMPORTACI”N DE DATOS -----------------
+---------------- IMPORTACI√ìN DE DATOS -----------------
 -------------------------------------------------------
 
 --- ARCHIVO CATALOGO.CSV ---
 CREATE OR ALTER PROCEDURE Production.ImportCatalogo
-	@NomArchCat NVARCHAR(255), -- Par·metro para el nombre del archivo
+	@NomArchCat NVARCHAR(255), -- Par√°metro para el nombre del archivo
 	@NomArchLineaProd NVARCHAR(255)
 AS
 BEGIN
@@ -36,7 +36,7 @@ BEGIN
 		FechaIng DATE
 	);
 
-	-- Usar el par·metro @NomArch en el BULK INSERT
+	-- Usar el par√°metro @NomArch en el BULK INSERT
 	EXEC('
 		BULK INSERT #TmpCatalogo
 		FROM ''' + @NomArchCat + '''
@@ -50,7 +50,7 @@ BEGIN
 
 	-- Usar el parametro @NomArchLineaProd en OPENROWSET e insertar en la tabla #TempCategoria
 	EXEC('INSERT INTO #TempCategoria (Descripcion, NomProd) ' +
-    'SELECT [LÕNEA DE PRODUCTO], PRODUCTO ' +
+    'SELECT [L√çNEA DE PRODUCTO], PRODUCTO ' +
     'FROM OPENROWSET(''Microsoft.ACE.OLEDB.16.0'', ' +
     '''Excel 12.0;Database=' + @NomArchLineaProd + ';HDR=YES'', ' +
     '''SELECT * FROM [Clasificacion productos$]'')');
@@ -111,7 +111,7 @@ CREATE OR ALTER PROCEDURE Production.ImportElectrodomesticos
 	@NomArch VARCHAR(255)
 AS
 BEGIN
-	DECLARE @DescCategoria CHAR(16) = 'ELECTRODOM…STICO';
+	DECLARE @DescCategoria CHAR(16) = 'ELECTRODOM√âSTICO';
 
 	IF NOT EXISTS(SELECT 1 FROM Production.LineaProducto WHERE Descripcion = @DescCategoria)	-- SOLO LO INSERTO LA PRIMERA VEZ
 		EXEC Production.InsertLineaProd @Descripcion = @DescCategoria;
@@ -156,7 +156,7 @@ BEGIN
 	);
 
 	EXEC('INSERT INTO #TempProdImport(TEXTO)
-    SELECT NombreProducto + ''|'' + Proveedor + ''|'' + CategorÌa + ''|'' + CantidadPorUnidad + ''|'' + TRY_CAST(PrecioUnidad AS VARCHAR(10))
+    SELECT NombreProducto + ''|'' + Proveedor + ''|'' + Categor√≠a + ''|'' + CantidadPorUnidad + ''|'' + TRY_CAST(PrecioUnidad AS VARCHAR(10))
     FROM OPENROWSET(''Microsoft.ACE.OLEDB.16.0'', 
                      ''Excel 12.0;Database=' + @NomArch + ';HDR=YES;IMEX=1'', 
                      ''SELECT * FROM [Listado de Productos$]'')');
@@ -251,7 +251,7 @@ BEGIN
 
 
 	EXEC('INSERT INTO #TempInfoCompImport(TEXTO)
-		SELECT TRY_CAST([LEGAJO/ID] AS CHAR(6)) + ''|'' + NOMBRE + ''|'' + APELLIDO + ''|'' + TRY_CAST(TRY_CAST(DNI AS NUMERIC(8,0)) AS VARCHAR(8)) + ''|'' + DIRECCION + ''|'' + [EMAIL PERSONAL] + ''|'' + [EMAIL EMPRESA] + ''|'' + CARGO + ''|'' + SUCURSAL + ''|'' + TURNO
+		SELECT TRY_CAST([LEGAJO/ID] AS CHAR(6)) + ''|'' + NOMBRE + ''|'' + APELLIDO + ''|'' + TRY_CAST(TRY_CAST(DNI AS NUMERIC(8,0)) AS VARCHAR(8)) + ''|'' + DIRECCION + ''|'' + [EMAIL PERSONAL] + ''|'' + [EMAIL EMPRESA] + ''|'' + ISNULL(CUIL, ''0'') + ''|'' + CARGO + ''|'' + SUCURSAL + ''|'' + TURNO
 		FROM OPENROWSET(''Microsoft.ACE.OLEDB.16.0'', 
 						 ''Excel 12.0;Database=' + @NomArch + ''', 
 						 ''SELECT * FROM [Empleados$A1:K17]'')');
@@ -271,9 +271,10 @@ BEGIN
 			MAX(CASE WHEN NumParte = 5 THEN Parte END) AS DIRECCION_EMP,
 			MAX(CASE WHEN NumParte = 6 THEN Parte END) AS EMAIL_PERSONAL,
 			MAX(CASE WHEN NumParte = 7 THEN Parte END) AS EMAIL_EMPRESA,
-			MAX(CASE WHEN NumParte = 8 THEN Parte END) AS CARGO,
-			MAX(CASE WHEN NumParte = 9 THEN Parte END) AS SUCURSAL,
-			MAX(CASE WHEN NumParte = 10 THEN Parte END) AS TURNO
+			MAX(CASE WHEN NumParte = 8 THEN Parte END) AS CUIL,
+			MAX(CASE WHEN NumParte = 9 THEN Parte END) AS CARGO,
+			MAX(CASE WHEN NumParte = 10 THEN Parte END) AS SUCURSAL,
+			MAX(CASE WHEN NumParte = 11 THEN Parte END) AS TURNO
 		FROM TablaParse
 		GROUP BY ID
 	),
@@ -282,8 +283,8 @@ BEGIN
 		FROM DetalleEmp
 		CROSS APPLY ddbba.ParseUbicacion(DIRECCION_EMP)
 	)
-	INSERT INTO Person.Empleado(Legajo, Nombre, Apellido, DNI, Direccion, Localidad, Provincia, EmailPersona, EmailEmpresarial, Cargo, IdSuc, Turno)
-	SELECT de.LEGAJO, de.NOMBRE, de.APELLIDO, de.DNI, dd.DIRECCION, dd.LOCALIDAD, dd.PROVINCIA, de.EMAIL_PERSONAL, de.EMAIL_EMPRESA, de.CARGO, s.IdSuc, 
+	INSERT INTO Person.Empleado(Legajo, Nombre, Apellido, DNI, Direccion, Localidad, Provincia, EmailPersona, EmailEmpresarial, CUIL, Cargo, IdSuc, Turno)
+	SELECT de.LEGAJO, de.NOMBRE, de.APELLIDO, de.DNI, dd.DIRECCION, dd.LOCALIDAD, dd.PROVINCIA, de.EMAIL_PERSONAL, de.EMAIL_EMPRESA, de.CUIL, de.CARGO, s.IdSuc, 
 			CASE 
 				WHEN TURNO LIKE 'Jornada completa' THEN 'JC'
 				ELSE TURNO
@@ -305,11 +306,11 @@ BEGIN
 
 
 	EXEC('INSERT INTO Production.LineaProducto (Descripcion)
-		SELECT DISTINCT([LÕNEA DE PRODUCTO])
+		SELECT DISTINCT([L√çNEA DE PRODUCTO])
 		FROM OPENROWSET(''Microsoft.ACE.OLEDB.16.0'', 
 						 ''Excel 12.0;Database=' + @NomArch + ''', 
 						 ''SELECT * FROM [Clasificacion productos$]'')
-		WHERE NOT EXISTS(SELECT 1 FROM Production.LineaProducto WHERE Descripcion = [LÕNEA DE PRODUCTO] COLLATE Latin1_General_CI_AS)');
+		WHERE NOT EXISTS(SELECT 1 FROM Production.LineaProducto WHERE Descripcion = [L√çNEA DE PRODUCTO] COLLATE Latin1_General_CI_AS)');
 
 	EXEC ddbba.InsertReg @Mod='I', @Txt = 'IMPOTAR PRODUCTOS DE INFORMACION_COMPLEMENTARIA.XLSX'
 END
@@ -481,13 +482,13 @@ GO
 ------------------ REPORTES ------------------
 ----------------------------------------------
 
-CREATE OR ALTER PROCEDURE Reporte.TotalFacturadoPorDia(@mes SMALLINT, @aÒo INT)
+CREATE OR ALTER PROCEDURE Reporte.TotalFacturadoPorDia(@mes SMALLINT, @a√±o INT)
 AS
 BEGIN
 	WITH VentasPorDiaDeSemana(Dia, Monto) as (
 		SELECT DATENAME(WEEKDAY, v.Fecha), d.Subtotal
 		FROM Sales.Venta v JOIN Sales.DetalleVenta d on v.IdVenta = d.IdVenta
-		WHERE MONTH(v.Fecha) = @mes AND YEAR(v.Fecha) = @aÒo
+		WHERE MONTH(v.Fecha) = @mes AND YEAR(v.Fecha) = @a√±o
 		AND v.Estado = 'ACTIVA'
 	)
 
