@@ -22,29 +22,35 @@
     </LogicalFolder>
     <LogicalFolder Name="Queries" Type="0" Sorted="true">
       <Items>
-        <FileNode Name="00_CreacionTablasYSPParaDML.sql">
+        <FileNode Name="00_CreacionTablasYEsquemas.sql">
           <AssociatedConnectionMoniker>8c91a03d-f9b4-46c0-a305-b5dcc79ff907:DESKTOP-6LUG926\SQLEXPRESS:True</AssociatedConnectionMoniker>
           <AssociatedConnSrvName>DESKTOP-6LUG926\SQLEXPRESS</AssociatedConnSrvName>
           <AssociatedConnUserName />
-          <FullPath>00_CreacionTablasYSPParaDML.sql</FullPath>
+          <FullPath>00_CreacionTablasYEsquemas.sql</FullPath>
         </FileNode>
-        <FileNode Name="01_CreacionSPParaImportacion.sql">
+        <FileNode Name="01_CreacionSPParaABM.sql">
           <AssociatedConnectionMoniker>8c91a03d-f9b4-46c0-a305-b5dcc79ff907:DESKTOP-6LUG926\SQLEXPRESS:True</AssociatedConnectionMoniker>
           <AssociatedConnSrvName>DESKTOP-6LUG926\SQLEXPRESS</AssociatedConnSrvName>
           <AssociatedConnUserName />
-          <FullPath>01_CreacionSPParaImportacion.sql</FullPath>
+          <FullPath>01_CreacionSPParaABM.sql</FullPath>
         </FileNode>
-        <FileNode Name="02_CreacionSPParaReportes.sql">
-          <AssociatedConnectionMoniker>8c91a03d-f9b4-46c0-a305-b5dcc79ff907:DESKTOP-6LUG926\SQLEXPRESS:True</AssociatedConnectionMoniker>
-          <AssociatedConnSrvName>DESKTOP-6LUG926\SQLEXPRESS</AssociatedConnSrvName>
-          <AssociatedConnUserName />
-          <FullPath>02_CreacionSPParaReportes.sql</FullPath>
-        </FileNode>
-        <FileNode Name="03_RequisitosDeSeguridad.sql">
+        <FileNode Name="02_CreacionSPParaImportacion.sql">
           <AssociatedConnectionMoniker />
           <AssociatedConnSrvName />
           <AssociatedConnUserName />
-          <FullPath>03_RequisitosDeSeguridad.sql</FullPath>
+          <FullPath>02_CreacionSPParaImportacion.sql</FullPath>
+        </FileNode>
+        <FileNode Name="03_CreacionSPParaReportes.sql">
+          <AssociatedConnectionMoniker />
+          <AssociatedConnSrvName />
+          <AssociatedConnUserName />
+          <FullPath>03_CreacionSPParaReportes.sql</FullPath>
+        </FileNode>
+        <FileNode Name="04_RequisitosDeSeguridad.sql">
+          <AssociatedConnectionMoniker />
+          <AssociatedConnSrvName />
+          <AssociatedConnUserName />
+          <FullPath>04_RequisitosDeSeguridad.sql</FullPath>
         </FileNode>
         <FileNode Name="Com5900_Grupo14_Pruebas03.sql">
           <AssociatedConnectionMoniker>8c91a03d-f9b4-46c0-a305-b5dcc79ff907:DESKTOP-6LUG926\SQLEXPRESS:True</AssociatedConnectionMoniker>
