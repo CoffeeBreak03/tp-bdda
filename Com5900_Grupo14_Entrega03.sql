@@ -39,6 +39,10 @@ IF SCHEMA_ID('Person') IS NULL
 	EXEC('CREATE SCHEMA Person');
 GO
 
+IF SCHEMA_ID('Reporte') IS NULL
+	EXEC('CREATE SCHEMA Reporte');
+GO
+
 -------------------------------------------------------
 ----------------- CREACIÓN DE TABLAS ------------------
 -------------------------------------------------------
