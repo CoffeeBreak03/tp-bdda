@@ -366,6 +366,10 @@ BEGIN
 		SET Baja = GETDATE()
 		WHERE IdTipoCli = @IdTCli;
 
+		UPDATE Person.TipoCliente
+		SET Baja = GETDATE()
+		WHERE IdTipoCli = @IdTCli;
+
 		EXEC ddbba.InsertReg @Mod='D', @Txt = N'BORRADO LÓGICO DE REGISTRO EN TABLA TIPO CLIENTE';
 	END
 	ELSE

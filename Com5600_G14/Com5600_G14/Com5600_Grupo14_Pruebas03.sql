@@ -299,7 +299,7 @@ SELECT * FROM Person.Cliente
 --MEDIO DE PAGO
 --CASOS DE EXITO
 EXEC Sales.InsertMedPag
-	@Desc = 'Tarjeta de credito';
+	@Desc = 'Bitcoin';
 
  EXEC Sales.DeleteMedPag
 	@IdMedPag = 2;
