@@ -1,3 +1,23 @@
+------------------------------------------------------------------
+--MATERIA: BASES DE DATOS APLICADA
+--GRUPO: 14
+--BASUALDO, NICOLÁS NAHUEL 44238788
+--MARCONI, LUCAS MARTIN 45324860
+--PARODI, FRANCISCO MAXILIANO 44669305
+--RODRIGUEZ, MARCOS LEÓN 45040212
+----------------------------------------------------------------
+
+------------------------------------
+--PRUEBA DE IMPORTACION Y REPORTES--
+------------------------------------
+
+--ORDEN DE EJECUCION DE LOS SP PARA IMPORTAR:
+--1.Production.ImportCatalogo
+--2.Production.ImportElectrodomesticos
+--3.Production.ImporteProductosImportados
+--4.Production.ImportInfoComp
+--5.ImportVentas
+
 USE Com5600G14;
 
 --- ARCHIVO CATALOGO.CSV ---
@@ -141,26 +161,26 @@ SELECT COUNT(*) AS TotalRegistros_Venta
 FROM Sales.Venta;
 
 
-EXEC ddbba.TotalFacturadoPorDia
+EXEC Reporte.TotalFacturadoPorDia
 	@mes = 02, 
 	@año = 2019;
 
-EXEC ddbba.TotalFacturadoPorTurnoPorMes
+EXEC Reporte.TotalFacturadoPorTurnoPorMes
 
-EXEC ddbba.CantidadProdVendidosEnRangoFecha
+EXEC Reporte.CantidadProdVendidosEnRangoFecha
 	@fechaIni = '2019-01-26', 
 	@fechaFin= '2019-03-14';
 
-EXEC ddbba.CantidadProdVendidosPorSucursalEnRangoFecha
+EXEC Reporte.CantidadProdVendidosPorSucursalEnRangoFecha
 	@fechaIni = '2019-01-26', 
 	@fechaFin= '2019-03-14';
 
-EXEC ddbba.ProductosMasVendidosEnMes
+EXEC Reporte.ProductosMasVendidosEnMes
 	@mes = 03;
 
-EXEC ddbba.ProductosMenosVendidosEnMes
+EXEC Reporte.ProductosMenosVendidosEnMes
 	@mes = 03;
 
-EXEC ddbba.AcumuladoVentasParaFechaYSucursal
+EXEC Reporte.AcumuladoVentasParaFechaYSucursal
 	@fecha = '2019-01-26', 
 	@sucursal = 'San Justo';

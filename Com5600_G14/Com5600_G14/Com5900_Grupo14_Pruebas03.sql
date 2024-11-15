@@ -1,4 +1,13 @@
-﻿--Casos de pruebas de los procedures
+﻿------------------------------------------------------------------
+--MATERIA: BASES DE DATOS APLICADA
+--GRUPO: 14
+--BASUALDO, NICOLÁS NAHUEL 44238788
+--MARCONI, LUCAS MARTIN 45324860
+--PARODI, FRANCISCO MAXILIANO 44669305
+--RODRIGUEZ, MARCOS LEÓN 45040212
+----------------------------------------------------------------
+
+--Casos de pruebas de los procedures
 USE Com5600G14
 
 --SUCURSALES
