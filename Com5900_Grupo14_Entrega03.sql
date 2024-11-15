@@ -973,38 +973,34 @@ GO
 
 
 --- TABLA DETALLE VENTA ---
-CREATE OR ALTER PROCEDURE Sales.InsertDetVenta
-	@CantCompra INT,
-	@Subtotal NUMERIC(7,2),
-	@NroVenta INT,
-	@IdProd INT
+CREATE OR ALTER PROCEDURE Sales.InsertDetalleVenta
+    @CantCompra INT,
+    @NroVenta INT,
+    @IdProd INT
 AS
 BEGIN
-	IF EXISTS (SELECT 1 FROM Sales.Venta WHERE IdVenta = @NroVenta)
-		AND EXISTS (SELECT 1 FROM Production.Producto WHERE IdProd = @IdProd)
-	BEGIN
-		DECLARE @IdVenta INT = (SELECT IdVenta FROM Sales.Venta WHERE IdVenta = @NroVenta)
+    IF EXISTS (SELECT 1 FROM Sales.Venta WHERE IdVenta = @NroVenta)
+    BEGIN
+        IF EXISTS (SELECT 1 FROM Production.Producto WHERE IdProd = @IdProd)
+        BEGIN
+        DECLARE @PrecioUnit DECIMAL(7,2) = (SELECT PrecioUnit FROM Production.Producto WHERE IdProd = @IdProd)
 
-		INSERT INTO Sales.DetalleVenta (Cantidad, Subtotal, IdVenta, IdProd)
-		VALUES (@CantCompra, @Subtotal, @IdVenta, @IdProd)
+        DECLARE @Subtotal DECIMAL(7,2) = @PrecioUnit * @CantCompra;
 
-		EXEC ddbba.InsertReg @Mod = 'I', @Txt = 'INGRESAR REGISTRO EN TABLA DETALLE VENTA' 
+        INSERT INTO Sales.DetalleVenta (Cantidad, Subtotal, IdVenta, IdProd)
+        VALUES (@CantCompra, @Subtotal, @NroVenta, @IdProd);
 
-		--ACTUALIZACIÓN EN TABLA PRODUCTO--
-		UPDATE Production.Producto
-		SET CantVendida = CantVendida + @CantCompra
-		WHERE IdProd = @IdProd
-
-		DECLARE @CADENA VARCHAR(MAX)
-		SET @CADENA = (SELECT N'ACTUALIZACIÓN DE CANTIDAD DE PRODUCTO ' + CAST(IdProd AS VARCHAR(10)) FROM Production.Producto WHERE IdProd = @IdProd)
-
-		EXEC ddbba.InsertReg @Mod='U', @Txt = @CADENA
-	END
-	ELSE
-	BEGIN
-		EXEC ddbba.InsertReg @Mod = 'I', @Txt = 'ERROR EN INGRESAR REGISTRO EN TABLA DETALLE VENTA';
-		RAISERROR('NRO VENTA INVÁLIDO %d', 16, 1, @NroVenta);
-	END
+        EXEC ddbba.InsertReg @Mod='I', @Txt = 'INSERTAR REGISTRO EN TABLA DETALLEVENTA';
+        END
+        ELSE
+        BEGIN
+            RAISERROR('ID DE PRODUCTO NO VALIDO %d', 16, 1, @IdProd);
+        END
+    END
+    ELSE
+    BEGIN
+        RAISERROR('ID DE VENTA NO VALIDO %d', 16, 1, @NroVenta);
+    END
 END
 GO
 
