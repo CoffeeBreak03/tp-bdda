@@ -738,56 +738,75 @@ GO
 CREATE OR ALTER PROCEDURE Sales.InsertNotaCredito
     @NroFact CHAR(12),
     @IdProd INT,
-    @Monto DECIMAL(7, 2),
     @Motivo VARCHAR(255)
 AS
 BEGIN
-    IF EXISTS(SELECT 1 FROM Sales.Factura WHERE NroFact = @NroFact AND Estado = 'PAGADA' AND Total >= @Monto)
+	DECLARE @MontoTotalGastado DECIMAL(7,2) = (SELECT SUM(nc.Monto) 
+												FROM Sales.NotaCredito nc
+													INNER JOIN Sales.Factura f ON f.IdFact = nc.IdFac
+												WHERE f.NroFact = @NroFact);
+
+	DECLARE @Monto DECIMAL(7, 2) = (SELECT PrecioUnit FROM Production.Producto WHERE IdProd = @IdProd);
+
+    -- Verificar si @Monto es NULL después de asignar, y si es así, devolver un error
+    IF @Monto IS NULL
     BEGIN
-        -- Validar si @IdProd es mayor que 0, obtener el precio del producto y asignar a @Monto
-        IF @IdProd > 0
-        BEGIN
-            SET @Monto = (SELECT PrecioUnit FROM Production.Producto WHERE IdProd = @IdProd);
+        RAISERROR('El producto especificado no existe o no tiene un precio definido.', 16, 1);
+        RETURN;
+    END
 
-            -- Verificar si @Monto es NULL después de asignar, y si es así, devolver un error
-            IF @Monto IS NULL
-            BEGIN
-                RAISERROR('El producto especificado no existe o no tiene un precio definido.', 16, 1);
-                RETURN;
-            END
-        END
-        ELSE
-            SET @IdProd = 0;  -- Si no hay producto, simplemente usar el monto proporcionado inicialmente
+    IF EXISTS(SELECT 1 FROM Sales.Factura WHERE NroFact = @NroFact AND Estado IN ('PAGADA', 'NC EMITIDA') AND Total >= @Monto)
+    BEGIN
+		IF @MontoTotalGastado IS NULL OR @MontoTotalGastado <= (SELECT Total FROM Sales.Factura WHERE NroFact = @NroFact)
+		BEGIN
+			DECLARE @IdFact INT = (SELECT MAX(IdFact) FROM Sales.Factura WHERE NroFact = @NroFact);
+			DECLARE @IdVent INT = (SELECT IdVent FROM Sales.Factura WHERE IdFact = @IdFact);
+			DECLARE @IdDetalle INT = (SELECT IdDetalle FROM Sales.DetalleVenta WHERE IdVenta = @IdVent AND IdProd = @IdProd);
 
-        -- Continuar con el proceso
-        DECLARE @IdFact INT = (SELECT MAX(IdFact) FROM Sales.Factura WHERE NroFact = @NroFact);
-        DECLARE @IdVent INT = (SELECT IdVent FROM Sales.Factura WHERE IdFact = @IdFact);
+			INSERT INTO Sales.NotaCredito(IdFac, IdProdNuevo, IdDet, Monto, FechaEmision, Motivo)
+			VALUES (@IdFact, @IdProd, @IdDetalle, @Monto, GETDATE(), @Motivo);
 
-        INSERT INTO Sales.NotaCredito(IdFac, IdProdNuevo, Monto, FechaEmision, Motivo)
-        VALUES (@IdFact, @IdProd, @Monto, GETDATE(), @Motivo);
+			-- Actualizar la factura y la venta a estado CANCELADA
+			IF @MontoTotalGastado = (SELECT Total FROM Sales.Factura WHERE IdFact = @IdFact)
+			BEGIN
+				UPDATE Sales.Factura
+				SET Estado = 'CANCELADA', FechaEstado = GETDATE()
+				WHERE IdFact = @IdFact;
 
-        -- Actualizar la factura y la venta a estado CANCELADA
-        UPDATE Sales.Factura
-        SET Estado = 'CANCELADA', FechaEstado = GETDATE()
-        WHERE IdFact = @IdFact;
+				UPDATE Sales.Venta
+				SET Estado = 'ANULADA', FechaEstado = GETDATE()
+				WHERE IdVenta = @IdVent;
+			END
+			ELSE
+			BEGIN
+				UPDATE Sales.Factura
+				SET Estado = 'NC EMITIDA', FechaEstado = GETDATE()
+				WHERE IdFact = @IdFact;
+				
+				UPDATE Sales.Venta
+				SET Estado = 'CANCELADA', FechaEstado = GETDATE()
+				WHERE IdVenta = @IdVent;
+			END
 
-        UPDATE Sales.Venta
-        SET Estado = 'CANCELADA', FechaEstado = GETDATE()
-        WHERE IdVenta = @IdVent;
+			-- Si se especificó un producto, ajustar el inventario
+			IF @Motivo NOT IN ('%NO FUNCIONA%', '%DEFECTUOSO%')
+			BEGIN
+				DECLARE @PrecioUnit DECIMAL(7,2) = (SELECT PrecioUnit FROM Production.Producto WHERE IdProd = @IdProd);
+				DECLARE @CantidadComprada INT = CAST(@Monto / @PrecioUnit AS INT);
 
-        -- Si se especificó un producto, ajustar el inventario
-        IF @IdProd > 0
-        BEGIN
-            DECLARE @PrecioUnit DECIMAL(7,2) = (SELECT PrecioUnit FROM Production.Producto WHERE IdProd = @IdProd);
-            DECLARE @CantidadComprada INT = CAST(@Monto / @PrecioUnit AS INT);
+				UPDATE Production.Producto
+				SET CantIngresada = CantIngresada + @CantidadComprada, 
+					CantVendida = CantVendida - @CantidadComprada
+				WHERE IdProd = @IdProd;
+			END
 
-            UPDATE Production.Producto
-            SET CantIngresada = CantIngresada + @CantidadComprada, 
-                CantVendida = CantVendida - @CantidadComprada
-            WHERE IdProd = @IdProd;
-        END
-
-        EXEC ddbba.InsertReg @Mod = 'I', @Txt = 'INSERTAR REGISTRO DE TABLA NOTA DE CRÉDITO';
+			EXEC ddbba.InsertReg @Mod = 'I', @Txt = 'INSERTAR REGISTRO DE TABLA NOTA DE CRÉDITO';
+		END
+		ELSE
+		BEGIN
+			EXEC ddbba.InsertReg @Mod = 'I', @Txt = 'ERROR EN INSERTAR REGISTRO DE TABLA NOTA DE CRÉDITO';
+			RAISERROR('EL MONTO DE LA NC EXCEDE EL MONTO DE FACTURA.', 16, 1);
+		END
     END
     ELSE
     BEGIN
