@@ -1,10 +1,10 @@
 ------------------------------------------------------------------
 --MATERIA: BASES DE DATOS APLICADA
 --GRUPO: 14
---BASUALDO, NICOLÁS NAHUEL 44238788
+--BASUALDO, NICOLÃS NAHUEL 44238788
 --MARCONI, LUCAS MARTIN 45324860
 --PARODI, FRANCISCO MAXILIANO 44669305
---RODRIGUEZ, MARCOS LEÓN 45040212
+--RODRIGUEZ, MARCOS LEÃ“N 45040212
 ----------------------------------------------------------------
 
 ------------------------------------------
@@ -13,7 +13,7 @@
 USE [Com5600G14]
 GO
 
---- MOSTRAR LOS DATOS ENCRIPTADOS SIN CONTRASEÑA---
+--- MOSTRAR LOS DATOS ENCRIPTADOS SIN CONTRASEÃ‘A---
 SELECT IdEmp AS NroEmp,
 		Nombre,
 		Apellido,
@@ -28,19 +28,19 @@ SELECT IdEmp AS NroEmp,
 FROM Person.Empleado;
 GO
 
---- MOSTRAR LOS DATOS ENCRIPTADOS CON CONTRASEÑA---
-DECLARE @Contraseña NVARCHAR(16) = 'QuieroMiPanDanes';
+--- MOSTRAR LOS DATOS ENCRIPTADOS CON CONTRASEÃ‘A---
+DECLARE @ContraseÃ±a NVARCHAR(16) = 'QuieroMiPanDanes';
 SELECT IdEmp AS NroEmp,
 		Nombre,
 		Apellido,
 		EmailEmpresarial,
 		Turno,
 		Cargo,
-		CAST(DECRYPTBYPASSPHRASE(@Contraseña, DNI, 1, CAST(IdEmp AS VARBINARY(255))) AS CHAR(8)) AS DNI,
-		CAST(DECRYPTBYPASSPHRASE(@Contraseña, Direccion) AS VARCHAR(50)) AS Direccion,
-		CAST(DECRYPTBYPASSPHRASE(@Contraseña, Localidad) AS VARCHAR(40)) AS Localidad,
-		CAST(DECRYPTBYPASSPHRASE(@Contraseña, Provincia) AS VARCHAR(40)) AS Provincia,
-		CAST(DECRYPTBYPASSPHRASE(@Contraseña, EmailPersona) AS VARCHAR(100)) AS EmailPersonal
+		CAST(DECRYPTBYPASSPHRASE(@ContraseÃ±a, DNI, 1, CAST(IdEmp AS VARBINARY(255))) AS CHAR(8)) AS DNI,
+		CAST(DECRYPTBYPASSPHRASE(@ContraseÃ±a, Direccion) AS VARCHAR(50)) AS Direccion,
+		CAST(DECRYPTBYPASSPHRASE(@ContraseÃ±a, Localidad) AS VARCHAR(40)) AS Localidad,
+		CAST(DECRYPTBYPASSPHRASE(@ContraseÃ±a, Provincia) AS VARCHAR(40)) AS Provincia,
+		CAST(DECRYPTBYPASSPHRASE(@ContraseÃ±a, EmailPersona) AS VARCHAR(100)) AS EmailPersonal
 FROM Person.Empleado;
 GO
 
@@ -102,7 +102,7 @@ GO
 
 --- EXEC SOBRE SP DE INSERT NOTA DE CREDITO ---
 --- ESPERADO: INSERT EXITOSO
-EXEC Sales.InsertNotaCredito '448-34-8700', 0, 82.25, '';
+EXEC Sales.InsertNotaCredito '448-34-8700', 1894, '';
 GO
 
 
