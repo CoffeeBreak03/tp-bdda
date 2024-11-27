@@ -279,13 +279,16 @@ BEGIN
 	(
 		IdNotaCredito INT IDENTITY(1,1) PRIMARY KEY,
 		IdFac INT NOT NULL,
+		IdDet INT NOT NULL,
 		IdProdNuevo INT,
 		Monto DECIMAL(18, 2) NOT NULL,
 		FechaEmision DATE NOT NULL,
-		Motivo VARCHAR(255)
+		Motivo VARCHAR(255),
 
 		CONSTRAINT FK_IdFact FOREIGN KEY (IdFac) 
-			REFERENCES Sales.Factura(IdFact)
+			REFERENCES Sales.Factura(IdFact),
+		CONSTRAINT FK_IdDetalle FOREIGN KEY (IdDet)
+			REFERENCES Sales.DetalleVenta(IdDetalle)
 	);
 END
 GO
