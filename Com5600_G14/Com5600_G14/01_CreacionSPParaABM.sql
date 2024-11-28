@@ -157,7 +157,7 @@ BEGIN
 		IF NOT EXISTS (SELECT 1 FROM Production.LineaProducto WHERE Descripcion = @DescN)
 		BEGIN
 			UPDATE Production.LineaProducto
-			SET Descripcion = @DescN
+			SET Descripcion = UPPER(@DescN)
 			WHERE IdLinProd = @IdLin;
 
 			EXEC ddbba.InsertReg @Mod='U', @Txt = N'ACTUALIZAR REGISTRO EN TABLA LINEA PRODUCTO';
@@ -194,7 +194,7 @@ BEGIN
 		IF NOT EXISTS (SELECT 1 FROM Production.Producto WHERE Descripcion = @Descripcion AND NomProd = @NombreProd)
 		BEGIN
 			INSERT INTO Production.Producto(CantIngresada, NomProd, Descripcion, IdLinProd, Proveedor, PrecioUnit) 
-			VALUES(@CantIngreso, @Descripcion, @NombreProd, @IdLinProd, @Proveedor, @PrecioUnit);
+			VALUES(@CantIngreso, @NombreProd, @Descripcion, @IdLinProd, @Proveedor, @PrecioUnit);
 	
 			EXEC ddbba.InsertReg @Mod='I', @Txt = 'INSERTAR REGISTRO EN TABLA PRODUCTO';
 		END
@@ -209,8 +209,6 @@ BEGIN
 		EXEC ddbba.InsertReg @Mod='I', @Txt = 'ERROR EN INSERTAR REGISTRO EN TABLA PRODUCTO';
 		RAISERROR('LINEA DE PRODUCTO ERRÓNEA %d', 16, 1, @IdLinProd);
 	END
-
-	
 END
 GO
 
@@ -263,7 +261,7 @@ BEGIN
 	IF EXISTS(SELECT 1 FROM Production.Producto WHERE IdProd = @IdProd)
 	BEGIN
 		UPDATE Production.Producto
-		SET CantIngresada = @CantIng
+		SET CantIngresada = CantIngresada + @CantIng
 		WHERE IdProd = @IdProd;
 
 		EXEC ddbba.InsertReg @Mod='U', @Txt = 'ACTUALIZAR CANTIDAD INGRESADA DE REGISTRO EN TABLA PRODUCTO';
@@ -363,10 +361,6 @@ BEGIN
 	IF EXISTS(SELECT 1 FROM Person.TipoCliente WHERE IdTipoCli = @IdTCli)	
 	BEGIN
 		UPDATE Person.Cliente
-		SET Baja = GETDATE()
-		WHERE IdTipoCli = @IdTCli;
-
-		UPDATE Person.TipoCliente
 		SET Baja = GETDATE()
 		WHERE IdTipoCli = @IdTCli;
 
@@ -592,6 +586,10 @@ BEGIN
 				INSERT INTO Sales.Pago (NroPago, Monto, IdMedPago, IdFactura)
 				VALUES (@NroPago, @Monto, @MedPago, @IdFact);
 
+				UPDATE Sales.Factura
+				SET Estado = 'PAGADA'
+				WHERE IdFact = @IdFact;
+
 				EXEC ddbba.InsertReg @Mod='I', @Txt = 'INSERTAR REGISTRO EN TABLA PAGO';
 			END
 			ELSE
@@ -746,7 +744,11 @@ BEGIN
 													INNER JOIN Sales.Factura f ON f.IdFact = nc.IdFac
 												WHERE f.NroFact = @NroFact);
 
-	DECLARE @Monto DECIMAL(7, 2) = (SELECT PrecioUnit FROM Production.Producto WHERE IdProd = @IdProd);
+	DECLARE @Monto DECIMAL(7, 2) = (SELECT (dv.Subtotal/dv.Cantidad)
+									FROM Sales.Factura f
+										INNER JOIN Sales.Venta v ON v.IdVenta = f.IdVent
+										INNER JOIN Sales.DetalleVenta dv ON dv.IdVenta = v.IdVenta
+									WHERE dv.IdProd = @IdProd AND f.NroFact = @NroFact);
 
     -- Verificar si @Monto es NULL después de asignar, y si es así, devolver un error
     IF @Monto IS NULL
@@ -789,7 +791,7 @@ BEGIN
 			END
 
 			-- Si se especificó un producto, ajustar el inventario
-			IF @Motivo NOT IN ('%NO FUNCIONA%', '%DEFECTUOSO%')
+			IF @Motivo NOT IN ('%NO FUNCIONA%', '%DEFECTUOSO%', '%DAÑADO%')
 			BEGIN
 				DECLARE @PrecioUnit DECIMAL(7,2) = (SELECT PrecioUnit FROM Production.Producto WHERE IdProd = @IdProd);
 				DECLARE @CantidadComprada INT = CAST(@Monto / @PrecioUnit AS INT);
@@ -815,7 +817,6 @@ BEGIN
     END
 END;
 GO
-
 -------------------------------------------------------
 ----------------- CREACIÓN DE INDICES -----------------
 -------------------------------------------------------
