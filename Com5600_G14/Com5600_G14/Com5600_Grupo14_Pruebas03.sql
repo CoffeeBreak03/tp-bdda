@@ -7,43 +7,6 @@
 --RODRIGUEZ, MARCOS LEÓN 45040212
 ----------------------------------------------------------------
 
-CREATE OR ALTER PROCEDURE Person.ClienteRandom
-	@cantidad INT
-AS
-BEGIN
-	DECLARE @i INT = 0;
-
-	WHILE(@i < @cantidad)
-	BEGIN
-		INSERT INTO Person.Cliente(DNI, Nombre, Apellido, IdTipoCli, Genero)
-		SELECT
-			(SELECT ABS(CHECKSUM(NEWID())) % 99999999 + 1000000) AS DNI,
-			
-			(SELECT TOP 1 n1.nombre + ' ' + n2.nombre
-			FROM Person.NomYAp n1, Person.NomYAp n2
-			WHERE n1.nombre != n2.nombre
-			ORDER BY NEWID()) AS nombre,
-		
-			(SELECT TOP 1 ap.apellido
-			FROM Person.NomYAp ap
-			ORDER BY NEWID()) AS apellido,
-
-			(SELECT TOP 1 tp.IdTipoCli
-			FROM Person.TipoCliente tp
-			ORDER BY NEWID()) AS TipoCli,
-
-			(SELECT 
-			CASE 
-				WHEN ABS(CHECKSUM(NEWID())) % 2 = 0 THEN 'Male'
-				ELSE 'Female'
-			END) AS Genero
-
-		SET @i = @i+1
-	END
-END
-GO
-
-
 --Ejecutar primero las importaciones y luego los casos de prueba 
 --Ejecutar los casos de exito en orden, Gracias
 --Casos de pruebas de los procedures
@@ -487,37 +450,32 @@ EXEC Sales.UpdateEstadoPago
 
 --NOTA DE CREDITO
 --CASOS DE EXITO
-EXEC Sales.InsertNotaCredito
-    @NroFact = '226-31-3081',
-    @IdProd = 6487,
-    @Monto = 2.00,
+EXEC Sales.InsertNotaCredito 
+    @NroFact = '877-22-3308',
+    @IdProd = 681,
     @Motivo = 'Devolución de producto dañado';
 
+--Se van a poder vere los cambios en las tablas para le idventa 66
 SELECT * FROM Sales.NotaCredito
+SELECT * FROM Sales.Factura
+SELECT * FROM Sales.DetalleVenta
+SELECT * FROM Sales.Venta
+SELECT * FROM Production.Producto
 
 --CASOS DE FALLLO
 EXEC Sales.InsertNotaCredito
-    @NroFact = '631-41-3108', --ERROR POR FACTURA CANCELADA
-    @IdProd = 6456,
-    @Monto = 5.80,
+    @NroFact = '877-22-3308', --ERROR POR FACTURA CANCELADA
+    @IdProd = 681,
     @Motivo = 'Devolución de producto vencido';
 
 EXEC Sales.InsertNotaCredito
-    @NroFact = '5546-85-4168', --ERROR POR FACTURA INEXISTENTE
+    @NroFact = '999-99-9999', --ERROR POR FACTURA INEXISTENTE
     @IdProd = 6456,
-    @Monto = 5.80,
     @Motivo = 'Devolución de producto vencido';
-
-EXEC Sales.InsertNotaCredito
-    @NroFact = '373-73-7910',
-    @IdProd = 6487,
-    @Monto = 90.00, --ERROR POR TOTAL DE FACTURA MENOR AL MONTO DEL NC
-    @Motivo = 'Devolución de producto dañado';
 
 EXEC Sales.InsertNotaCredito
     @NroFact = '373-73-7910',
     @IdProd = 12, --ERROR POR PRODUCTO NO EXISTENTE
-    @Monto = 2.00,
     @Motivo = 'Devolución de producto dañado';
 
 SELECT * FROM Sales.NotaCredito

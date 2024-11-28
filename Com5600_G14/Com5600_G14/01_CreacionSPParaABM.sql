@@ -1043,3 +1043,38 @@ BEGIN
 END
 GO
 
+CREATE OR ALTER PROCEDURE Person.ClienteRandom
+	@cantidad INT
+AS
+BEGIN
+	DECLARE @i INT = 0;
+
+	WHILE(@i < @cantidad)
+	BEGIN
+		INSERT INTO Person.Cliente(DNI, Nombre, Apellido, IdTipoCli, Genero)
+		SELECT
+			(SELECT ABS(CHECKSUM(NEWID())) % 99999999 + 1000000) AS DNI,
+			
+			(SELECT TOP 1 n1.nombre + ' ' + n2.nombre
+			FROM Person.NomYAp n1, Person.NomYAp n2
+			WHERE n1.nombre != n2.nombre
+			ORDER BY NEWID()) AS nombre,
+		
+			(SELECT TOP 1 ap.apellido
+			FROM Person.NomYAp ap
+			ORDER BY NEWID()) AS apellido,
+
+			(SELECT TOP 1 tp.IdTipoCli
+			FROM Person.TipoCliente tp
+			ORDER BY NEWID()) AS TipoCli,
+
+			(SELECT 
+			CASE 
+				WHEN ABS(CHECKSUM(NEWID())) % 2 = 0 THEN 'Male'
+				ELSE 'Female'
+			END) AS Genero
+
+		SET @i = @i+1
+	END
+END
+GO
