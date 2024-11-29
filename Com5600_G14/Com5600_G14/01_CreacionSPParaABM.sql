@@ -709,7 +709,7 @@ AS
 BEGIN
     IF EXISTS (SELECT 1 FROM Sales.Venta WHERE IdVenta = @NroVenta)
     BEGIN
-        IF EXISTS (SELECT 1 FROM Production.Producto WHERE IdProd = @IdProd)
+        IF EXISTS (SELECT 1 FROM Production.Producto WHERE IdProd = @IdProd AND CantIngresada > @CantCompra)
         BEGIN
         DECLARE @PrecioUnit DECIMAL(7,2) = (SELECT PrecioUnit FROM Production.Producto WHERE IdProd = @IdProd)
 
@@ -717,6 +717,10 @@ BEGIN
 
         INSERT INTO Sales.DetalleVenta (Cantidad, Subtotal, IdVenta, IdProd)
         VALUES (@CantCompra, @Subtotal, @NroVenta, @IdProd);
+
+	UPDATE Production.Producto
+	SET CantIngresada = CantIngresada - @CantCompra
+	WHERE IdProd = @IdProd;
 
         EXEC ddbba.InsertReg @Mod='I', @Txt = 'INSERTAR REGISTRO EN TABLA DETALLEVENTA';
         END
@@ -746,8 +750,7 @@ BEGIN
 
 	DECLARE @Monto DECIMAL(7, 2) = (SELECT (dv.Subtotal/dv.Cantidad)
 									FROM Sales.Factura f
-										INNER JOIN Sales.Venta v ON v.IdVenta = f.IdVent
-										INNER JOIN Sales.DetalleVenta dv ON dv.IdVenta = v.IdVenta
+										INNER JOIN Sales.DetalleVenta dv ON dv.IdVenta = f.IdVent
 									WHERE dv.IdProd = @IdProd AND f.NroFact = @NroFact);
 
     -- Verificar si @Monto es NULL después de asignar, y si es así, devolver un error
@@ -791,7 +794,7 @@ BEGIN
 			END
 
 			-- Si se especificó un producto, ajustar el inventario
-			IF @Motivo NOT IN ('%NO FUNCIONA%', '%DEFECTUOSO%', '%DAÑADO%')
+			IF @Motivo NOT LIKE '%NO FUNCIONA%' AND @Motivo NOT LIKE '%DEFECTUOSO%' AND @Motivo NOT LIKE '%DAÑADO%'
 			BEGIN
 				DECLARE @PrecioUnit DECIMAL(7,2) = (SELECT PrecioUnit FROM Production.Producto WHERE IdProd = @IdProd);
 				DECLARE @CantidadComprada INT = CAST(@Monto / @PrecioUnit AS INT);
