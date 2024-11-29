@@ -462,12 +462,7 @@ SELECT * FROM Sales.DetalleVenta
 SELECT * FROM Sales.Venta
 SELECT * FROM Production.Producto
 
---CASOS DE FALLLO
-EXEC Sales.InsertNotaCredito
-    @NroFact = '877-22-3308', --ERROR POR FACTURA CANCELADA
-    @IdProd = 681,
-    @Motivo = 'Devolución de producto vencido';
-
+--CASOS DE FALLO
 EXEC Sales.InsertNotaCredito
     @NroFact = '999-99-9999', --ERROR POR FACTURA INEXISTENTE
     @IdProd = 6456,
